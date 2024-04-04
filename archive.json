@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-04-02T00:41:44.352218+00:00",
+  "timestamp": "2024-04-04T00:41:36.492863+00:00",
   "repo": "quicwg/multipath",
   "labels": [
     {
@@ -8615,7 +8615,7 @@
       ],
       "body": "It's kind of weird that for the migration to the server preferred address path, the path ID is defined as 0. It might be advantageous to keep the anycast and the unicast path open for a limited amount of time.\r\n\r\nWe could consider defining this path to have path ID 1?",
       "createdAt": "2024-03-17T13:25:01Z",
-      "updatedAt": "2024-03-18T06:14:40Z",
+      "updatedAt": "2024-04-03T20:27:56Z",
       "closedAt": null,
       "comments": [
         {
@@ -8624,6 +8624,13 @@
           "body": "+1. I was under the impression that the preferred path was path-id=1 from the start.",
           "createdAt": "2024-03-18T03:42:03Z",
           "updatedAt": "2024-03-18T03:42:03Z"
+        },
+        {
+          "author": "huitema",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "Let's tackle that in conjunction with the server/client odd/even split. With that split, we have two options:\r\n\r\n1) Stay strictly compatible with 9000. The client performs a path migration, very similar in nature to a NAT rebinding, and the path ID remains 0.\r\n\r\n2) Create a specific path for the \"preferred\" address, in which case the client initiates a new path to that address. Since this is a client initiated new path, the path ID should be an even number, probably 2.",
+          "createdAt": "2024-04-03T20:27:55Z",
+          "updatedAt": "2024-04-03T20:27:55Z"
         }
       ]
     },
@@ -8898,6 +8905,69 @@
       "body": "We need to specify CID allocation strategy in case endpoints doesn't have available CIDs with same unused Path ID to initialize a new path.\r\n\r\nAlso need to take security into consideration.\r\n\r\nComments from PR#292:\r\n\r\n[marten-seemann](https://github.com/marten-seemann) [4 days ago](https://github.com/quicwg/multipath/pull/292/files#r1527502104)\r\n> This seems backwards. Connection IDs are issues for paths, not the other way around.\r\nAlso, if I allow you to open 1 million paths, you're probably wise to not issue me 1 million CIDs.",
       "createdAt": "2024-03-21T14:17:14Z",
       "updatedAt": "2024-03-21T14:17:14Z",
+      "closedAt": null,
+      "comments": []
+    },
+    {
+      "number": 326,
+      "id": "I_kwDOGNtpaM6EY1Bi",
+      "title": "The spec doesn't say enough about DPLPMTUD or max_udp_payload_size",
+      "url": "https://github.com/quicwg/multipath/issues/326",
+      "state": "OPEN",
+      "author": "LPardue",
+      "authorAssociation": "MEMBER",
+      "assignees": [],
+      "labels": [],
+      "body": "see https://datatracker.ietf.org/doc/html/rfc9000#name-datagram-packetization-laye and https://datatracker.ietf.org/doc/html/rfc9000#section-18.2\r\n\r\n> The maximum UDP payload size parameter is an integer value that limits the size of UDP payloads that the endpoint is willing to receive. UDP datagrams with payloads larger than this limit are not likely to be processed by the receiver.\r\n> \r\n> The default for this parameter is the maximum permitted UDP payload of 65527. Values below 1200 are invalid.\r\n> \r\n> This limit does act as an additional constraint on datagram size in the same way as the path MTU, but it is a property of the endpoint and not the path; see [Section 14](https://datatracker.ietf.org/doc/html/rfc9000#datagram-size). It is expected that this is the space an endpoint dedicates to holding incoming packets.\r\n\r\nI expect this document to say more about path MTU discovery than is written in https://quicwg.org/multipath/draft-ietf-quic-multipath.html#section-7.6. Especially that the `max_udp_payload_size` TP applies to all paths and could have unintended consequences for multipath PMTUD.",
+      "createdAt": "2024-04-02T17:53:59Z",
+      "updatedAt": "2024-04-02T17:53:59Z",
+      "closedAt": null,
+      "comments": []
+    },
+    {
+      "number": 327,
+      "id": "I_kwDOGNtpaM6EeeYH",
+      "title": "How will MPQUIC support the scenario where the client connects with a dual-stack server via both IPv4 and IPv6 paths?",
+      "url": "https://github.com/quicwg/multipath/issues/327",
+      "state": "OPEN",
+      "author": "yangfurong",
+      "authorAssociation": "NONE",
+      "assignees": [],
+      "labels": [],
+      "body": "Considering a scenario where a server has both IPv4 and IPv6 addresses and a client has two interfaces (one with IPv4 and the other with IPv6), how will MPQUIC support it?\r\n\r\nIt seems like there should be an address announcement mechanism in MPQUIC to support such a scenario.\r\n\r\n",
+      "createdAt": "2024-04-03T10:46:15Z",
+      "updatedAt": "2024-04-03T16:20:54Z",
+      "closedAt": null,
+      "comments": [
+        {
+          "author": "qdeconinck",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "Currently, the base MPQUIC draft assumes that either the server has a single address (while the client may have several), or it knows additional addresses by side-channels (like preferred_address TP or application information). One solution could be to bring back the ADD_ADDRESS/REMOVE_ADDRESS frames defined in a previous draft version (see https://datatracker.ietf.org/doc/html/draft-deconinck-quic-multipath-07#section-6.4).\r\n\r\nThe question being, should it be part of the base draft, or be an extension to the multipath extension?",
+          "createdAt": "2024-04-03T15:58:00Z",
+          "updatedAt": "2024-04-03T15:58:00Z"
+        },
+        {
+          "author": "LPardue",
+          "authorAssociation": "MEMBER",
+          "body": "I think any work needs to be motivated by practical use cases. \r\n\r\nCommonly, a server that supports listening on multiple IP addresses would declare them in the DNS. Is that not already good enough?",
+          "createdAt": "2024-04-03T16:20:54Z",
+          "updatedAt": "2024-04-03T16:20:54Z"
+        }
+      ]
+    },
+    {
+      "number": 328,
+      "id": "I_kwDOGNtpaM6EkW7z",
+      "title": "Designing odd/even path-id, or not.",
+      "url": "https://github.com/quicwg/multipath/issues/328",
+      "state": "OPEN",
+      "author": "huitema",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "During the processing of PR #272, we discussed separating the path identifiers in two classes: client initiated path identifiers, with even numbers, and server initiated path identifiers, with odd numbers.\r\n\r\nSeparating the identifiers in two classes allows clients and servers to both initiate paths, without risking identifier collisions. The current single-class design only works because only the client initiates paths. Otherwise, we would have the risk of both client and servers picking the same path identifiers, and simultaneously sending \"path challenges\" with the same identifier, but using different IP addresses and UDP ports. This would create confusion.\r\n\r\nThe design itself is fairly simple: both endpoints advertise odd and even path identified connection identifiers. When the client creates a path, the client picks an available even numbered identifier advertised by the server; when the server creates a path, it picks an odd numbered identifier. When receiving a packet for a new path, each endpoint verifies that the new number is authorized. For example, if the client receives from the server a message on a new path, it verifies that the path identifier of the connection ID chosen by the server is odd. If not, it MAY signal an MP protocol violation. When responding, the endpoint picks a connection ID with the same path identifier as that of the incoming packet.\r\n\r\nThat much is clear, but then we have to look at the impact of the odd/even design on the number of paths in the `initial_max_paths` transport parameter, and in the `MAX_PATHS` frame. If we follow the design of the max streams design in RFC 9000, we should replace the `initial_max_paths` parameters by two separate parameters:\r\n\r\n* initial_max_paths_client: maximum number of path that the client may inititiate,\r\n* initial_max_paths_server: maximum number of path that the server may inititiate.\r\n\r\nFor each of those, the maximum would be the minimum of the values advertised by client and server. Instead of writing that the multipath option is not used if the `initial_max_paths` parameter is not present, we would have something a bit more complicated, i.e., stating that the frames are only used if at least one of the parameters is present.\r\n\r\nThen we would also have to split the `MAX_PATHS` frame into `MAX_PATHS_CLIENT` and `MAX_PATHS_SERVER`.\r\n\r\nAll that is doable, but I wonder whether this complexity is justified. Maybe what we need instead is just a way to resolve the \"path identifier collision\". For example, assuming just on path identifier space, we could have a \"client win\" rule: if the client creates path N with a specific 4 tuple and then receives a path message with identifier N from the server using a different 4 tuple, it just ignores it; if the server sends a path challenge four path N with a four tuple, and then receives a path message from the client with a different 4 tuple, it consider its initial challenge as lost and only responds to the client's message.\r\n\r\nSo, I have a question: bite the complexity of 2 parallel path identifier sequences; or, simply add a \"collisions\" rule. What do people think?\r\n\r\n\r\ninitial_max_stream_data_bidi_local\r\ninitial_max_stream_data_bidi_remote",
+      "createdAt": "2024-04-03T23:38:58Z",
+      "updatedAt": "2024-04-03T23:39:17Z",
       "closedAt": null,
       "comments": []
     }
