@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-04-04T00:41:36.492863+00:00",
+  "timestamp": "2024-04-07T00:44:43.286219+00:00",
   "repo": "quicwg/multipath",
   "labels": [
     {
@@ -8967,9 +8967,24 @@
       "labels": [],
       "body": "During the processing of PR #272, we discussed separating the path identifiers in two classes: client initiated path identifiers, with even numbers, and server initiated path identifiers, with odd numbers.\r\n\r\nSeparating the identifiers in two classes allows clients and servers to both initiate paths, without risking identifier collisions. The current single-class design only works because only the client initiates paths. Otherwise, we would have the risk of both client and servers picking the same path identifiers, and simultaneously sending \"path challenges\" with the same identifier, but using different IP addresses and UDP ports. This would create confusion.\r\n\r\nThe design itself is fairly simple: both endpoints advertise odd and even path identified connection identifiers. When the client creates a path, the client picks an available even numbered identifier advertised by the server; when the server creates a path, it picks an odd numbered identifier. When receiving a packet for a new path, each endpoint verifies that the new number is authorized. For example, if the client receives from the server a message on a new path, it verifies that the path identifier of the connection ID chosen by the server is odd. If not, it MAY signal an MP protocol violation. When responding, the endpoint picks a connection ID with the same path identifier as that of the incoming packet.\r\n\r\nThat much is clear, but then we have to look at the impact of the odd/even design on the number of paths in the `initial_max_paths` transport parameter, and in the `MAX_PATHS` frame. If we follow the design of the max streams design in RFC 9000, we should replace the `initial_max_paths` parameters by two separate parameters:\r\n\r\n* initial_max_paths_client: maximum number of path that the client may inititiate,\r\n* initial_max_paths_server: maximum number of path that the server may inititiate.\r\n\r\nFor each of those, the maximum would be the minimum of the values advertised by client and server. Instead of writing that the multipath option is not used if the `initial_max_paths` parameter is not present, we would have something a bit more complicated, i.e., stating that the frames are only used if at least one of the parameters is present.\r\n\r\nThen we would also have to split the `MAX_PATHS` frame into `MAX_PATHS_CLIENT` and `MAX_PATHS_SERVER`.\r\n\r\nAll that is doable, but I wonder whether this complexity is justified. Maybe what we need instead is just a way to resolve the \"path identifier collision\". For example, assuming just on path identifier space, we could have a \"client win\" rule: if the client creates path N with a specific 4 tuple and then receives a path message with identifier N from the server using a different 4 tuple, it just ignores it; if the server sends a path challenge four path N with a four tuple, and then receives a path message from the client with a different 4 tuple, it consider its initial challenge as lost and only responds to the client's message.\r\n\r\nSo, I have a question: bite the complexity of 2 parallel path identifier sequences; or, simply add a \"collisions\" rule. What do people think?\r\n\r\n\r\ninitial_max_stream_data_bidi_local\r\ninitial_max_stream_data_bidi_remote",
       "createdAt": "2024-04-03T23:38:58Z",
-      "updatedAt": "2024-04-03T23:39:17Z",
+      "updatedAt": "2024-04-04T16:14:13Z",
       "closedAt": null,
-      "comments": []
+      "comments": [
+        {
+          "author": "LPardue",
+          "authorAssociation": "MEMBER",
+          "body": "I'm not sure I follow the frame split argument. Stream IDs are split 4 ways and don't require 4 different 4 types of MAX_STREAMS to manage vending credits - they only use 2 types for the bidi/uni split, not the client/server split.\r\n\r\nI'm not sure I follow the argument that an `initial_max_paths_client` maximum would have to resolve to the minimum of what both endpoints sent. A client doesn't need to send the parameter at all. \r\n\r\nMy understanding during IETF is that it wasnt clear if people wanted server IDs today, socall we were doing is making space for some future extwnsion. In that case, it would be simple enough to define a parameter `initial_max_paths_client` sent only by the server, and then a frame to manage increasing that value sent only by the server. A future extension could use a new TP in the opposite direction and reuse the frame.",
+          "createdAt": "2024-04-04T08:23:24Z",
+          "updatedAt": "2024-04-04T08:23:24Z"
+        },
+        {
+          "author": "huitema",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "@LPardue I started writing up a copy of the stream-id design, but there is a difference. The \"max path\" parameter does not just control the \"number of paths\". It also controls \"the number of paths for which the endpoint is willing to accept connection ID\". So, suppose the server sends \"initial_max_paths_client=0xffff\", but the client is unwilling to accept connection IDs for more than 3 paths? The client will need to send \"initial_max_paths_client=3\" to constrain the server.",
+          "createdAt": "2024-04-04T16:14:12Z",
+          "updatedAt": "2024-04-04T16:14:12Z"
+        }
+      ]
     }
   ],
   "pulls": [
@@ -31001,6 +31016,32 @@
           ]
         }
       ]
+    },
+    {
+      "number": 329,
+      "id": "PR_kwDOGNtpaM5r3yig",
+      "title": "Split path identifiers as odd-even for client and server initiated",
+      "url": "https://github.com/quicwg/multipath/pull/329",
+      "state": "OPEN",
+      "author": "huitema",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "During the IETF 119 meeting, we decided to split the path identifier space into even numbers for client initiated paths and odd numbers for server initiated paths. This PR implement the requested changes.",
+      "createdAt": "2024-04-05T17:49:00Z",
+      "updatedAt": "2024-04-05T17:58:04Z",
+      "baseRepository": "quicwg/multipath",
+      "baseRefName": "main",
+      "baseRefOid": "da86c1ed2f87f0e795b53382b4df0a2f6a2510df",
+      "headRepository": "huitema/multipath",
+      "headRefName": "path-id-odd-even",
+      "headRefOid": "8b988ed5c44b523dd3594540b33cf0e93d666f60",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": []
     }
   ]
 }
