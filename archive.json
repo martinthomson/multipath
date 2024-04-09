@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-04-07T00:44:43.286219+00:00",
+  "timestamp": "2024-04-09T00:40:40.453727+00:00",
   "repo": "quicwg/multipath",
   "labels": [
     {
@@ -31029,19 +31029,134 @@
       "labels": [],
       "body": "During the IETF 119 meeting, we decided to split the path identifier space into even numbers for client initiated paths and odd numbers for server initiated paths. This PR implement the requested changes.",
       "createdAt": "2024-04-05T17:49:00Z",
-      "updatedAt": "2024-04-05T17:58:04Z",
+      "updatedAt": "2024-04-08T23:56:51Z",
       "baseRepository": "quicwg/multipath",
       "baseRefName": "main",
       "baseRefOid": "da86c1ed2f87f0e795b53382b4df0a2f6a2510df",
       "headRepository": "huitema/multipath",
       "headRefName": "path-id-odd-even",
-      "headRefOid": "8b988ed5c44b523dd3594540b33cf0e93d666f60",
+      "headRefOid": "e2dd660716aa9371945749e418aa6c1ba308b917",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
       "mergeCommit": null,
       "comments": [],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "PRR_kwDOGNtpaM52XqRn",
+          "commit": {
+            "abbreviatedOid": "8b988ed"
+          },
+          "author": "qdeconinck",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "I agree that we need such splitting to enable server-initiated paths on the long run. The current text is a good first shot, though I wonder if we could take more inspiration on the MAX_STREAMS frame (with a cumulative count of open path relative to the initiator).\r\n\r\nAlso, I don't know if we already need to define the server-initiated messages now, or if we only stick to the client-initiated ones for now (base draft), and let people define them in a future extension to multipath.",
+          "createdAt": "2024-04-08T09:32:21Z",
+          "updatedAt": "2024-04-08T10:04:10Z",
+          "comments": [
+            {
+              "originalPosition": 58,
+              "body": "```suggestion\r\n  this parameter is equivalent to sending a MAX_SERVER_PATHS ({{max-paths-frame}}) \r\n```",
+              "createdAt": "2024-04-08T09:32:22Z",
+              "updatedAt": "2024-04-08T10:04:10Z"
+            },
+            {
+              "originalPosition": 60,
+              "body": "```suggestion\r\n  initial_max_server_paths is not advertised by both endpoints, servers\r\n```",
+              "createdAt": "2024-04-08T09:32:44Z",
+              "updatedAt": "2024-04-08T10:04:10Z"
+            },
+            {
+              "originalPosition": 91,
+              "body": "```suggestion\r\nThey MUST NOT issue Connection IDs with odd numbered Path Identifiers larger than \r\n```",
+              "createdAt": "2024-04-08T09:33:53Z",
+              "updatedAt": "2024-04-08T10:04:10Z"
+            },
+            {
+              "originalPosition": 107,
+              "body": "```suggestion\r\nand server-initiated paths have odd-numbered path IDs (with the bit set to 1).\r\n```",
+              "createdAt": "2024-04-08T09:34:29Z",
+              "updatedAt": "2024-04-08T10:04:10Z"
+            },
+            {
+              "originalPosition": 113,
+              "body": "```suggestion\r\nthe limits set by MAX_CLIENT_PATHS and MAX_SERVER_PATHS frames {{max-paths-frame}}.\r\n```",
+              "createdAt": "2024-04-08T09:35:11Z",
+              "updatedAt": "2024-04-08T10:04:10Z"
+            },
+            {
+              "originalPosition": 170,
+              "body": "```suggestion\r\nThe MAX_CLIENT_PATHS (type=0x15228c0c) and MAX_SERVER_PATHS (type=0x15228c0d) frames inform the peer of the cumulative\r\n```",
+              "createdAt": "2024-04-08T09:43:50Z",
+              "updatedAt": "2024-04-08T10:04:10Z"
+            },
+            {
+              "originalPosition": 211,
+              "body": "I am not sure about this. Why not communicating the \"count of the cumulative number of paths of the given initiator\", and then let endpoints derive the corresponding Path IDs (similarly to what is done by MAX_STREAMS frame)?",
+              "createdAt": "2024-04-08T09:47:34Z",
+              "updatedAt": "2024-04-08T10:04:10Z"
+            },
+            {
+              "originalPosition": 221,
+              "body": "Maybe to adapt w.r.t. the previous comment about the count of cumulative number of paths for a given initiator.",
+              "createdAt": "2024-04-08T09:49:34Z",
+              "updatedAt": "2024-04-08T10:04:10Z"
+            },
+            {
+              "originalPosition": 223,
+              "body": "I think the violation is always detected at reception side. Furthermore, assume the following situation where the client advertised a MAX_CLIENT_PATHS allowing Path ID 8, while the server only advertised a MAX_CLIENT_PATHS allowing up to Path ID 6. Here, it is clear that the client cannot advertise CIDs with the Path ID 8. However, one could allow the server to communicate in advance CIDs with Path ID 8 to the client, as the client advertised support for up to Path ID 8.\r\n```suggestion\r\nif a peer published MP_NEW_CONNECTION_ID frames with higher Path Identifiers than the\r\nrespective limit advertised by the receiving host.\r\n```",
+              "createdAt": "2024-04-08T09:58:33Z",
+              "updatedAt": "2024-04-08T10:04:10Z"
+            },
+            {
+              "originalPosition": 248,
+              "body": "```suggestion\r\nTBD-07 (experiments use 0x15228c0c)                  | MAX_CLIENT_PATHS       | {{max-paths-frame}}\r\nTBD-08 (experiments use 0x15228c0d)                  | MAX_SERVER_PATHS       | {{max-paths-frame}}\r\n```",
+              "createdAt": "2024-04-08T09:58:53Z",
+              "updatedAt": "2024-04-08T10:04:10Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM52d5yk",
+          "commit": {
+            "abbreviatedOid": "079c2f3"
+          },
+          "author": "huitema",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-04-08T22:58:22Z",
+          "updatedAt": "2024-04-08T22:58:22Z",
+          "comments": [
+            {
+              "originalPosition": 211,
+              "body": "Yes, we could do that. The logical solution would be to carry a \"number\" instead of an identifier, and to have a derivation function, such as 2\\*N for client paths and 2\\*N+1 for server paths. But I think we need to think a bit more. The purpose of the \"MAX_PATHS\" is to control the amount of resource dedicated to path managements. The resource comes in two modes:\r\n\r\n* The number of MP_CONNECTION_ID that the endpoint has to remember,\r\n* The number of path contexts that the endpoint will handle.\r\n\r\nI think that the main purpose of the MAX_PATHS is to limit the number of MP_CONNECTION_ID. The peer can only create a new path if it has received and sent an MP_CONNECTION_ID for that path. Endpoints can control the creation of paths by limiting the creation of MP_CONNECTION_ID, which is a local decision. But endpoints need to also control the number of MP_CONNECTION_ID that the peer can send -- otherwise, the peer could announce that it supports 2^31 paths, and send as many connection ID. That would blow the memory allocation.\r\n\r\nControlling a \"max number of paths\" is not sufficient. The malevolent peer could create lots of MP_CONNECTION_ID, then issue PATH_ABANDON, the create more of that. I am pretty sure that repeating that cycle many times could lead to a DOS attack. Also, we understand that \"number of paths\" is imprecise, because of transmission delays, packet loss, etc. It is simpler to have a \"MAX_PATHS\" value that state \"no path identifier larger than N\" (or 2\\*N+1). Once the number of connection ID is limited, the peers can control how much resource will be used.\r\n\r\nIf we agree on that, we also need to decide what \"MAX_SERVER_PATH=0\" means. Assume we agree that N=0 corresponds to path_ID=2\\*N+1 = 1. Does stating \"MAX_SERVER_PATH=0\" means that \"path 1 is OK\", or does it mean \"path 1 is not OK, because 1 >= 2\\*0 +1\" ?",
+              "createdAt": "2024-04-08T22:58:22Z",
+              "updatedAt": "2024-04-08T22:59:09Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM52fBMw",
+          "commit": {
+            "abbreviatedOid": "8b988ed"
+          },
+          "author": "huitema",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-04-08T23:56:50Z",
+          "updatedAt": "2024-04-08T23:56:51Z",
+          "comments": [
+            {
+              "originalPosition": 221,
+              "body": "See discussion above. we need to agree on principles before fixing the text.",
+              "createdAt": "2024-04-08T23:56:50Z",
+              "updatedAt": "2024-04-08T23:56:51Z"
+            }
+          ]
+        }
+      ]
     }
   ]
 }
