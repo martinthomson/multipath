@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-04-09T00:40:40.453727+00:00",
+  "timestamp": "2024-04-11T00:41:00.284354+00:00",
   "repo": "quicwg/multipath",
   "labels": [
     {
@@ -8936,7 +8936,7 @@
       "labels": [],
       "body": "Considering a scenario where a server has both IPv4 and IPv6 addresses and a client has two interfaces (one with IPv4 and the other with IPv6), how will MPQUIC support it?\r\n\r\nIt seems like there should be an address announcement mechanism in MPQUIC to support such a scenario.\r\n\r\n",
       "createdAt": "2024-04-03T10:46:15Z",
-      "updatedAt": "2024-04-03T16:20:54Z",
+      "updatedAt": "2024-04-10T10:23:43Z",
       "closedAt": null,
       "comments": [
         {
@@ -8952,6 +8952,34 @@
           "body": "I think any work needs to be motivated by practical use cases. \r\n\r\nCommonly, a server that supports listening on multiple IP addresses would declare them in the DNS. Is that not already good enough?",
           "createdAt": "2024-04-03T16:20:54Z",
           "updatedAt": "2024-04-03T16:20:54Z"
+        },
+        {
+          "author": "yangfurong",
+          "authorAssociation": "NONE",
+          "body": "> I think any work needs to be motivated by practical use cases.\r\n> \r\n> Commonly, a server that supports listening on multiple IP addresses would declare them in the DNS. Is that not already good enough?\r\n\r\nIf we rely on DNS to handle this case, the DNS resolver must ensure that the resolved v6 and v4 addresses are attached to the same cluster.  In our usecase, the DNS resolver can not garuantee that. Here is an example. \r\n\r\n![aaa](https://github.com/quicwg/multipath/assets/10102895/47a05586-2901-46fb-b46e-4098984d3575)\r\n\r\n",
+          "createdAt": "2024-04-09T07:33:09Z",
+          "updatedAt": "2024-04-09T07:33:09Z"
+        },
+        {
+          "author": "LPardue",
+          "authorAssociation": "MEMBER",
+          "body": "You can use load balancer techniques to resolve that, for example using CID based routing to ensure cluster affinity.",
+          "createdAt": "2024-04-09T08:12:26Z",
+          "updatedAt": "2024-04-09T08:12:26Z"
+        },
+        {
+          "author": "huitema",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "@LPardue You are proposing to have the client use the DNS to find alternate IP or IPv6 addresses. That will not work naturally if the client just picks the first address returned by the DNS. The client has connection set with Cluster2, IPv4: a2. The DNS proposes AAAA records for IPv6:aa1 or IPv6:aa2. If the client sends a \"PATH_CHALLENGE\" towards IPv6:aa1, it will arrive at Cluster 1, the CID will probably not be recognized, and the challenge will fail.\r\n\r\nHowever, since the DNS has returned 2 IPv6 addresses, the client could prepare as many path challenges as it has learned addresses. That's a bit wasteful, but one of them will arrive at Cluster2, and if the CID is recognized and routed to the correct server the second path will eventually be established.\r\n\r\n@yangfurong we have discussed similar scenarios before. The general consensus is that handling the general case for \"client connects to an alternate server address\" would require a new frame, through which the server advertises a list of addresses -- see for example [this discussion](https://github.com/quicwg/multipath/issues/47#issuecomment-1010140751). We explicitly decided to not do that in the first version of the multipath draft -- it is already very complex, and we don't need the extra complexity of this feature now. It could be added by an extension on top of the multipath draft, defining a new frame, explaining its use, and most importantly analyzing the related security issues.\r\n\r\n\r\n\r\n",
+          "createdAt": "2024-04-10T01:58:30Z",
+          "updatedAt": "2024-04-10T01:59:29Z"
+        },
+        {
+          "author": "LPardue",
+          "authorAssociation": "MEMBER",
+          "body": "The presented scenario, of a client supporting two interfaces with no overlap of IP version, seems a bit arbitrary. However, I don't think it's unique to multipath and could happen with vanilla QUIC. \r\n\r\n> If the client sends a \"PATH_CHALLENGE\" towards IPv6:aa1, it will arrive at Cluster 1, the CID will probably not be recognized, and the challenge will fail.\r\n\r\nThis depends on the deployment architecture, load balancer, and CID-based routing. If a packet shouldn't go to the wrong cluster, don't forward it there. These capabilities exist today without multipath. \r\n\r\nI don't find it a compelling to make the protocol more complicated when other solutions can already be used. \r\n",
+          "createdAt": "2024-04-10T10:23:42Z",
+          "updatedAt": "2024-04-10T10:23:42Z"
         }
       ]
     },
@@ -31029,18 +31057,33 @@
       "labels": [],
       "body": "During the IETF 119 meeting, we decided to split the path identifier space into even numbers for client initiated paths and odd numbers for server initiated paths. This PR implement the requested changes.",
       "createdAt": "2024-04-05T17:49:00Z",
-      "updatedAt": "2024-04-08T23:56:51Z",
+      "updatedAt": "2024-04-10T22:55:15Z",
       "baseRepository": "quicwg/multipath",
       "baseRefName": "main",
       "baseRefOid": "da86c1ed2f87f0e795b53382b4df0a2f6a2510df",
       "headRepository": "huitema/multipath",
       "headRefName": "path-id-odd-even",
-      "headRefOid": "e2dd660716aa9371945749e418aa6c1ba308b917",
+      "headRefOid": "30a92b69eea1ad37fd8cfd5e03399b25648087f1",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
       "mergeCommit": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "Yanmei-Liu",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "Thanks a lot for the PR! \r\nI have a suggestion on simplify the transport parameters: We could define the the new transport parameter \"initial_max_path_ids\" as \"the max initial Path IDs each endpoint is willing to accept\". Then we only need one new transport parameter(0x0f739bbc1b666d08):\r\n\r\n1. client send the \"initial_max_path_ids\":\"X\" to inform the server that it would only accept server-initialized paths with Path IDs between [0, X]; (even)\r\n2. server send the \"initial_max_path_ids\":\"Y\" to inform the client that it would only accept client-initialized paths with Path IDs between [1, Y]; (odd)\r\n3. After handshake is finished, client and server could decide by their own to create how many paths to use. Note that endpoints could always choose the Minimum value between the local strict concurrent paths and the remote strict number.\r\n4. Endpoints SHOULD issue at least one unused Path ID inside the available Path ID range, but endpoints could always choose to limit the number of Path IDs which is indeed issued inside the connection, as part of the strategy to limit the concurrent paths created by the remote.",
+          "createdAt": "2024-04-10T15:19:23Z",
+          "updatedAt": "2024-04-10T15:19:23Z"
+        },
+        {
+          "author": "huitema",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "@Yanmei-Liu sorry, but having each side just announcing a number of path that it is willing to accept does not work. \r\n\r\nThis multipath proposal requires nodes to maintain three resources:\r\n\r\n* Path contexts for all the paths that are created, including per path resource for number spaces.\r\n* Connection identifiers contexts for all paths for which the local party has sent MP_NEW_CONNECTION_ID\r\n* Connection identifiers contexts for all paths for which the local party has received MP_NEW_CONNECTION_ID from the peer.\r\n\r\nTake the example of the client originated path number 2.  It can only be created if the client has sent MP_NEW_CONNECTION_ID with Path-ID=2 to the peer, and has also received MP_NEW_CONNECTION_ID with Path-ID=2 from the peer. Each peer will publish both even and odds CID. Each peer will need to accept number-of-path*number-of-CID-per-path CID, and will need to store them in memory. To avoid risks of DOS attacks, we need to control the max number of path in each direction, and that requires two variables: the max number of even paths and the max number of odd paths.",
+          "createdAt": "2024-04-10T22:55:15Z",
+          "updatedAt": "2024-04-10T22:55:15Z"
+        }
+      ],
       "reviews": [
         {
           "id": "PRR_kwDOGNtpaM52XqRn",
@@ -31155,8 +31198,132 @@
               "updatedAt": "2024-04-08T23:56:51Z"
             }
           ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM52qEQy",
+          "commit": {
+            "abbreviatedOid": "8b988ed"
+          },
+          "author": "huitema",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-04-10T03:28:45Z",
+          "updatedAt": "2024-04-10T03:28:45Z",
+          "comments": [
+            {
+              "originalPosition": 211,
+              "body": "@qdeconinck I think that the commit [reworking the max path frames](https://github.com/quicwg/multipath/pull/329/commits/46fb9fa7728789ab1271836c4d8562e8b4e755a8) fixes your issue. Please mark as resolved if it does.",
+              "createdAt": "2024-04-10T03:28:45Z",
+              "updatedAt": "2024-04-10T03:28:45Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM52q1nM",
+          "commit": {
+            "abbreviatedOid": "fd090a2"
+          },
+          "author": "qdeconinck",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-04-10T07:07:45Z",
+          "updatedAt": "2024-04-10T07:24:09Z",
+          "comments": [
+            {
+              "originalPosition": 685,
+              "body": "```suggestion\r\n: A count of the cumulative number of respectively client-initiated or server-initiated paths that can be opened\r\n```",
+              "createdAt": "2024-04-10T07:07:45Z",
+              "updatedAt": "2024-04-10T07:24:09Z"
+            },
+            {
+              "originalPosition": 690,
+              "body": "This should be 2^31 - 1, right? (2^31 - 1) * 2 = 2^32 - 2 (max client-initiated path ID) and (2^31 - 1) * 2 + 1 =  2^32 - 1 (max client-server path ID)\r\n```suggestion\r\nplus 1. These values cannot exceed 2^31-1, as it is not\r\n```",
+              "createdAt": "2024-04-10T07:11:55Z",
+              "updatedAt": "2024-04-10T07:24:09Z"
+            },
+            {
+              "originalPosition": 697,
+              "body": "I think the aforementioned commit resolves the issue, modulo the removal of the old text referring to old frame versions.\r\n```suggestion\r\nas a connection error of type FRAME_ENCODING_ERROR.\r\n```",
+              "createdAt": "2024-04-10T07:13:28Z",
+              "updatedAt": "2024-04-10T07:24:09Z"
+            },
+            {
+              "originalPosition": 211,
+              "body": "Thanks for the reworked text! Modulo my suggestion to remove the trailing text, I think it is better now.\r\n\r\nOnly one point that we may need to discuss now is the meaning of MAX_SERVER_PATHS=0, but also MAX_CLIENT_PATHS=0. I think MAX_CLIENT_PATHS=0 should actually allow Path ID 0, while MAX_SERVER_PATHS=0 should also enable Path ID 1. I see two reasons for this. First, it would allow using the whole space of the identifiers, without needing to cope with an invalid 0 value -- Path ID 0 is always valid as it is the initial path of the connection. Second, MAX_CLIENT_PATHS frames only appear when multipath is negotiated.\r\n\r\nSide note related to this, I think the MAX_SERVER_PATHS should only appear when the initial_max_server_paths has been advertised by both endpoints. Otherwise, this should be a PROTOCOL_VIOLATION.",
+              "createdAt": "2024-04-10T07:23:19Z",
+              "updatedAt": "2024-04-10T07:24:09Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM52un1u",
+          "commit": {
+            "abbreviatedOid": "8b988ed"
+          },
+          "author": "huitema",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-04-10T14:52:14Z",
+          "updatedAt": "2024-04-10T14:52:14Z",
+          "comments": [
+            {
+              "originalPosition": 221,
+              "body": "I don't like the \"cumulative number of paths\" because it is ambiguous -- there are many cases in which the apparent number of paths is not the same at both ends, e.g., if probes are in progress or if abandon is in transit. \"MAX_STREAMS\" get around that by forcing an automatic opening of streams -- for example, if the only stream is stream 0 and the server receives something for stream 16, then streams 4, 8 and 12 are automatically opened.",
+              "createdAt": "2024-04-10T14:52:14Z",
+              "updatedAt": "2024-04-10T14:52:14Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM52uqeZ",
+          "commit": {
+            "abbreviatedOid": "8b988ed"
+          },
+          "author": "huitema",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-04-10T14:54:19Z",
+          "updatedAt": "2024-04-10T14:54:20Z",
+          "comments": [
+            {
+              "originalPosition": 211,
+              "body": "Yes, I struggled with that. if we add the text that \"MAX_SERVER_PATHS should only appear when the initial_max_server_paths has been advertised by both endpoints\", then \"0 allows 1 on server\" makes sense.\r\n\r\nOf course, if we decide to remove the server capability, then this becomes easier...",
+              "createdAt": "2024-04-10T14:54:19Z",
+              "updatedAt": "2024-04-10T14:54:20Z"
+            }
+          ]
         }
       ]
+    },
+    {
+      "number": 330,
+      "id": "PR_kwDOGNtpaM5sQ-3I",
+      "title": "Fix errors and warning related to references",
+      "url": "https://github.com/quicwg/multipath/pull/330",
+      "state": "OPEN",
+      "author": "LPardue",
+      "authorAssociation": "MEMBER",
+      "assignees": [],
+      "labels": [],
+      "body": "Also seems like you had a load of trailing whitespace that would hurt the linter's feelings.",
+      "createdAt": "2024-04-10T16:03:11Z",
+      "updatedAt": "2024-04-10T16:03:11Z",
+      "baseRepository": "quicwg/multipath",
+      "baseRefName": "main",
+      "baseRefOid": "da86c1ed2f87f0e795b53382b4df0a2f6a2510df",
+      "headRepository": "quicwg/multipath",
+      "headRefName": "fix-citation-errors-warnings",
+      "headRefOid": "0bf075d5a32849edd9161d85f8c152751d2cd20d",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": []
     }
   ]
 }
