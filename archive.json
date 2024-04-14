@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-04-11T00:41:00.284354+00:00",
+  "timestamp": "2024-04-14T00:47:57.852807+00:00",
   "repo": "quicwg/multipath",
   "labels": [
     {
@@ -31304,26 +31304,42 @@
       "id": "PR_kwDOGNtpaM5sQ-3I",
       "title": "Fix errors and warning related to references",
       "url": "https://github.com/quicwg/multipath/pull/330",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "LPardue",
       "authorAssociation": "MEMBER",
       "assignees": [],
       "labels": [],
       "body": "Also seems like you had a load of trailing whitespace that would hurt the linter's feelings.",
       "createdAt": "2024-04-10T16:03:11Z",
-      "updatedAt": "2024-04-10T16:03:11Z",
+      "updatedAt": "2024-04-11T03:06:41Z",
       "baseRepository": "quicwg/multipath",
       "baseRefName": "main",
       "baseRefOid": "da86c1ed2f87f0e795b53382b4df0a2f6a2510df",
       "headRepository": "quicwg/multipath",
       "headRefName": "fix-citation-errors-warnings",
       "headRefOid": "0bf075d5a32849edd9161d85f8c152751d2cd20d",
-      "closedAt": null,
-      "mergedAt": null,
-      "mergedBy": null,
-      "mergeCommit": null,
+      "closedAt": "2024-04-11T03:06:40Z",
+      "mergedAt": "2024-04-11T03:06:40Z",
+      "mergedBy": "Yanmei-Liu",
+      "mergeCommit": {
+        "oid": "e930829818ff3a52042bfa5195d8375a1dd9c4c1"
+      },
       "comments": [],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "PRR_kwDOGNtpaM52zeZL",
+          "commit": {
+            "abbreviatedOid": "0bf075d"
+          },
+          "author": "Yanmei-Liu",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-04-11T03:03:05Z",
+          "updatedAt": "2024-04-11T03:03:05Z",
+          "comments": []
+        }
+      ]
     }
   ]
 }
