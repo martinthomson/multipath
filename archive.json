@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-04-16T00:40:14.412963+00:00",
+  "timestamp": "2024-04-18T00:40:13.658997+00:00",
   "repo": "quicwg/multipath",
   "labels": [
     {
@@ -31057,13 +31057,13 @@
       "labels": [],
       "body": "During the IETF 119 meeting, we decided to split the path identifier space into even numbers for client initiated paths and odd numbers for server initiated paths. This PR implement the requested changes.",
       "createdAt": "2024-04-05T17:49:00Z",
-      "updatedAt": "2024-04-10T22:55:15Z",
+      "updatedAt": "2024-04-17T18:05:49Z",
       "baseRepository": "quicwg/multipath",
       "baseRefName": "main",
-      "baseRefOid": "da86c1ed2f87f0e795b53382b4df0a2f6a2510df",
+      "baseRefOid": "e930829818ff3a52042bfa5195d8375a1dd9c4c1",
       "headRepository": "huitema/multipath",
       "headRefName": "path-id-odd-even",
-      "headRefOid": "30a92b69eea1ad37fd8cfd5e03399b25648087f1",
+      "headRefOid": "10fde70a6fa430276961c8247c846a46b35200ee",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
@@ -31082,6 +31082,48 @@
           "body": "@Yanmei-Liu sorry, but having each side just announcing a number of path that it is willing to accept does not work. \r\n\r\nThis multipath proposal requires nodes to maintain three resources:\r\n\r\n* Path contexts for all the paths that are created, including per path resource for number spaces.\r\n* Connection identifiers contexts for all paths for which the local party has sent MP_NEW_CONNECTION_ID\r\n* Connection identifiers contexts for all paths for which the local party has received MP_NEW_CONNECTION_ID from the peer.\r\n\r\nTake the example of the client originated path number 2.  It can only be created if the client has sent MP_NEW_CONNECTION_ID with Path-ID=2 to the peer, and has also received MP_NEW_CONNECTION_ID with Path-ID=2 from the peer. Each peer will publish both even and odds CID. Each peer will need to accept number-of-path*number-of-CID-per-path CID, and will need to store them in memory. To avoid risks of DOS attacks, we need to control the max number of path in each direction, and that requires two variables: the max number of even paths and the max number of odd paths.",
           "createdAt": "2024-04-10T22:55:15Z",
           "updatedAt": "2024-04-10T22:55:15Z"
+        },
+        {
+          "author": "huitema",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "I did the merge with draft 7. I think this PR is now ready, modulo one big question asked by Quentin in his review: _\"I don't know if we already need to define the server-initiated messages now, or if we only stick to the client-initiated ones for now (base draft), and let people define them in a future extension to multipath.\"_\r\n\r\nWe could absolutely simplify the PR by not defining the server initiated messages. In practice, the only change from draft 07 would be, \"the Path IDs are even numbers between 0 and 2^32 - 2.\" We would not need the second transport parameter, or the server variant of MAX PATH. The impact on implementations would be much smaller: multiply path-id by 2, change the name and ID of the \"enable multipath\" TP, change the name and ID of the \"max paths\" frame. This is very tempting, but I will not do that unless I get further feedback.",
+          "createdAt": "2024-04-16T05:16:00Z",
+          "updatedAt": "2024-04-16T05:16:00Z"
+        },
+        {
+          "author": "Yanmei-Liu",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "> I did the merge with draft 7. I think this PR is now ready, modulo one big question asked by Quentin in his review: _\"I don't know if we already need to define the server-initiated messages now, or if we only stick to the client-initiated ones for now (base draft), and let people define them in a future extension to multipath.\"_\r\n> \r\n> We could absolutely simplify the PR by not defining the server initiated messages. In practice, the only change from draft 07 would be, \"the Path IDs are even numbers between 0 and 2^32 - 2.\" We would not need the second transport parameter, or the server variant of MAX PATH. The impact on implementations would be much smaller: multiply path-id by 2, change the name and ID of the \"enable multipath\" TP, change the name and ID of the \"max paths\" frame. This is very tempting, but I will not do that unless I get further feedback.\r\n\r\nAfter these days discussion, I'd support that we only add \"the Path IDs initialized by client are even numbers between 0 and 2^32 - 2\" at this time, keep the possibility that we can always add the mechanism for server-initialize paths when real scenarios appear at any time. We can always do that whenever people need, and even in a separate extension would work well with the original draft.",
+          "createdAt": "2024-04-17T05:25:04Z",
+          "updatedAt": "2024-04-17T05:25:04Z"
+        },
+        {
+          "author": "huitema",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "@Yanmei-Liu OK. I will probably do a separate PR for the \"trimmed\" version, that will be cleaner than writing it on top of this one.",
+          "createdAt": "2024-04-17T05:46:32Z",
+          "updatedAt": "2024-04-17T05:46:32Z"
+        },
+        {
+          "author": "huitema",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "DO NOT MERGE THIS PLEASE!",
+          "createdAt": "2024-04-17T05:46:49Z",
+          "updatedAt": "2024-04-17T05:46:49Z"
+        },
+        {
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "body": "If we anyway need a second transport parameter to realise the server initiation, there is actually no difference if we do it now or later. So I guess we could keep it simple for now.",
+          "createdAt": "2024-04-17T07:46:41Z",
+          "updatedAt": "2024-04-17T07:46:41Z"
+        },
+        {
+          "author": "huitema",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "Check PR #331 as a much simpler way to reserve even path identifiers for future extension.",
+          "createdAt": "2024-04-17T18:05:48Z",
+          "updatedAt": "2024-04-17T18:05:48Z"
         }
       ],
       "reviews": [
@@ -31340,6 +31382,32 @@
           "comments": []
         }
       ]
+    },
+    {
+      "number": 331,
+      "id": "PR_kwDOGNtpaM5s9Nm0",
+      "title": "Use even numbers for path ID",
+      "url": "https://github.com/quicwg/multipath/pull/331",
+      "state": "OPEN",
+      "author": "huitema",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "This PR specifies using even number path identifiers. It anticipates the possibility of using the odd numbered identifiers for server-initiated paths, but does not specify how to do that. As a result, it is much simpler than PR #329.\r\n\r\nClose #328",
+      "createdAt": "2024-04-17T18:04:35Z",
+      "updatedAt": "2024-04-17T18:10:45Z",
+      "baseRepository": "quicwg/multipath",
+      "baseRefName": "main",
+      "baseRefOid": "e930829818ff3a52042bfa5195d8375a1dd9c4c1",
+      "headRepository": "huitema/multipath",
+      "headRefName": "simply-even",
+      "headRefOid": "07cf0da8d0206fccd6a5cf8e121d7f73c6a03ddc",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": []
     }
   ]
 }
