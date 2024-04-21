@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-04-18T00:40:13.658997+00:00",
+  "timestamp": "2024-04-21T00:48:06.366926+00:00",
   "repo": "quicwg/multipath",
   "labels": [
     {
@@ -31395,19 +31395,119 @@
       "labels": [],
       "body": "This PR specifies using even number path identifiers. It anticipates the possibility of using the odd numbered identifiers for server-initiated paths, but does not specify how to do that. As a result, it is much simpler than PR #329.\r\n\r\nClose #328",
       "createdAt": "2024-04-17T18:04:35Z",
-      "updatedAt": "2024-04-17T18:10:45Z",
+      "updatedAt": "2024-04-19T14:23:40Z",
       "baseRepository": "quicwg/multipath",
       "baseRefName": "main",
       "baseRefOid": "e930829818ff3a52042bfa5195d8375a1dd9c4c1",
       "headRepository": "huitema/multipath",
       "headRefName": "simply-even",
-      "headRefOid": "07cf0da8d0206fccd6a5cf8e121d7f73c6a03ddc",
+      "headRefOid": "ee958a18f4af5880e16c068135c9f95934c06568",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
       "mergeCommit": null,
-      "comments": [],
-      "reviews": []
+      "comments": [
+        {
+          "author": "huitema",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "Thanks for the fixes, @Yanmei-Liu ",
+          "createdAt": "2024-04-18T06:19:16Z",
+          "updatedAt": "2024-04-18T06:19:16Z"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "PRR_kwDOGNtpaM53q_3q",
+          "commit": {
+            "abbreviatedOid": "07cf0da"
+          },
+          "author": "Yanmei-Liu",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "Thanks a lot for this new PR!\r\nI totally support it, try to help fix a few typo issue.",
+          "createdAt": "2024-04-18T03:27:33Z",
+          "updatedAt": "2024-04-18T03:41:42Z",
+          "comments": [
+            {
+              "originalPosition": 19,
+              "body": "```suggestion\r\nserver-initiated paths, such as using even numbered path IDs for client-initiated paths\r\n```",
+              "createdAt": "2024-04-18T03:27:33Z",
+              "updatedAt": "2024-04-18T03:41:42Z"
+            },
+            {
+              "originalPosition": 20,
+              "body": "```suggestion\r\nand odd numbered path IDs for server-initiated paths.\r\n```",
+              "createdAt": "2024-04-18T03:27:55Z",
+              "updatedAt": "2024-04-18T03:41:42Z"
+            },
+            {
+              "originalPosition": 80,
+              "body": "```suggestion\r\nwith Path ID value larger than authorized MUST be treated as\r\n```",
+              "createdAt": "2024-04-18T03:36:52Z",
+              "updatedAt": "2024-04-18T03:41:42Z"
+            },
+            {
+              "originalPosition": 79,
+              "body": "```suggestion\r\nbeen received. MP_NEW_CONNECTION_ID received\r\n```",
+              "createdAt": "2024-04-18T03:37:15Z",
+              "updatedAt": "2024-04-18T03:41:42Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM531hX5",
+          "commit": {
+            "abbreviatedOid": "2db3227"
+          },
+          "author": "Yanmei-Liu",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-04-19T04:44:31Z",
+          "updatedAt": "2024-04-19T04:44:31Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOGNtpaM5319bg",
+          "commit": {
+            "abbreviatedOid": "2db3227"
+          },
+          "author": "qdeconinck",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "So I suppose then that receiving a MAX_PATHS with a Maximum Paths value of 0 leads to a connection error. A bit too bad, but I can live with that.\r\n\r\nA small suggestion to make the example clearer, otherwise this looks good to me.",
+          "createdAt": "2024-04-19T06:36:54Z",
+          "updatedAt": "2024-04-19T06:39:15Z",
+          "comments": [
+            {
+              "originalPosition": 101,
+              "body": "A small suggestion to make this clearer (and avoid the potential reader ambiguity of the \"2\" value)\r\n```suggestion\r\nFor example, if an endpoint received a Maximum Paths value of 3,\r\nit may send MP_NEW_CONNECTION_ID with Path ID 0, 2 and 4, but not higher.\r\n```",
+              "createdAt": "2024-04-19T06:36:54Z",
+              "updatedAt": "2024-04-19T06:39:15Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM535joL",
+          "commit": {
+            "abbreviatedOid": "2db3227"
+          },
+          "author": "huitema",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-04-19T14:23:35Z",
+          "updatedAt": "2024-04-19T14:23:35Z",
+          "comments": [
+            {
+              "originalPosition": 101,
+              "body": "Yes, good idea.",
+              "createdAt": "2024-04-19T14:23:35Z",
+              "updatedAt": "2024-04-19T14:23:35Z"
+            }
+          ]
+        }
+      ]
     }
   ]
 }
