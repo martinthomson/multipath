@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-05-07T00:41:55.361927+00:00",
+  "timestamp": "2024-05-09T00:42:09.093783+00:00",
   "repo": "quicwg/multipath",
   "labels": [
     {
@@ -8079,9 +8079,17 @@
       ],
       "body": "Based on discussion in PR #292:\r\n\r\n\r\n**[yangfurong](https://github.com/yangfurong) [on Nov 22, 2023] (https://github.com/quicwg/multipath/issues/new#r1401920170)**\r\n```\r\nFirst, I think the semantics of \"Path ID\" need to be clarified. For a specific bidirectional path, do both endpoints use the same path ID, or independently choose which path ID to use?\r\n```\r\n\r\n**@[qdeconinck](https://github.com/qdeconinck) qdeconinck [on Nov 22, 2023](https://github.com/quicwg/multipath/issues/new#r1402413785)**\r\n```\r\nI would keep the same logic as we did until now, i.e., each endpoint independently choose the Path ID it should use over a path. However, this \"Path ID\" (Flow ID may be more appropriate) would remain stable over a given path, even if the CID change.\r\n\r\nI have two concerns about forcing such synchronisation of Path ID:\r\n\r\n- Clients may try to create paths with Path IDs that are never seen by the server. For instance, Path ID 0 works, and it wants to try two additional paths, respectively with Path ID 1 and Path ID 2. However, the network path tried with Path ID 1 does not work and the server only sees Path ID 2 packets. If the client finally retires its Path ID 1, should the server also drop all related resources about its Path ID 1?\r\n- This would create issues if, for some use cases (like P2P), we would like the server to create paths to the client. What would happen if for some reason, both the client and the server try to open at the same time a path over the same network, but with different Path IDs?\r\n```\r\n\r\n**@[yangfurong](https://github.com/yangfurong) yangfurong [on Nov 23, 2023](https://github.com/quicwg/multipath/issues/new#r1402866322)**\r\n```\r\nIndeed, if both endpoints are allowed to initiate paths, it is better to not sync path IDs.\r\n```\r\n\r\n **@[michael-eriksson](https://github.com/michael-eriksson) michael-eriksson [on Nov 23, 2023](https://github.com/quicwg/multipath/issues/new#r1403326051)**\r\n```\r\nI would much prefer if paths had the same identifier in both directions, just like streams do. If also servers will be able to open paths, client-initiated path could use even path IDs and server-initiated path odd path IDs -- a direct reuse of the stream design.\r\n ```\r\n\r\n**@[yangfurong](https://github.com/yangfurong) yangfurong [on Nov 23, 2023](https://github.com/quicwg/multipath/issues/new#r1403613813)**\r\n```\r\n> I would much prefer if paths had the same identifier in both directions, just like streams do. If also servers will be able to open paths, client-initiated path could use even path IDs and server-initiated path odd path IDs -- a direct reuse of the stream design.\r\n\r\nIt's actually another way to somehow ''split'' the path ID spaces of endpoints. It solves the second problem as @qdeconinck pointed out. The only thing is how we define the TPs which limit the number of concurrent paths. There might be some options here. For examples:\r\n\r\n- We use one TP to indicate the number of concurrent paths that the sender is willing to accept. For instance, if both endpoints send ''2'', there will be four concurrent paths at maximum (each endpoint can initiate two paths).\r\n- We use two TPs where one indicates the max number of paths to be accepted by the sender and another one represents the max number of paths the sender wishes to initiate. This design allows endpoints to negotiate the total number of concurrent paths while the former one just informs the local decision to a peer.\r\n```\r\n\r\n**@[huitema](https://github.com/huitema) huitema [on Nov 26, 2023](https://github.com/quicwg/multipath/issues/new#r1405475249)**\r\n```\r\nI think we need to get a consensus on the management of path identifiers. I also think that we would get much better clarity if the client and server ended up using the same path ID values. Something like:\r\n\r\n1. The client proposes an initial number of paths, which limits how many path ID the server can \"pre allocate\" (to use @Yanmei-Liu terms)\r\n2. Both the server and the client pre-allocate connection identifiers, with path ID lower than the proposed limits.\r\n3. Client that starts a new path picks one of the server allocated CID, selecting the path ID.\r\n4. Server receiving a packet referencing a not yet use path ID must reply with client-allocated connection ID mentioning the same path ID.\r\n  - If the client has not yet allocated any such path ID, the server cannot send data on that new path.\r\n  - the client can always provide a new CID in messages containing a path challenge.\r\n  - the server can control how many paths will be open by simply limiting how many path ID it mentions.\r\n5. \"Abandon path(N)\" is handled pretty much like connection close, but just for the path. Any peer can send it, but the path is only closed if both do, or if RTO pass.\r\n  - if a path is abandoned, we should say what happens if the peer keeps using it. Drop the packets? Repeat the Abandon Path message?\r\n6. Path ID cannot be reused. If a path_id is abandoned, all CID allocated for that path should be retired.\r\n7. The client can use a MAX_PATH_ID frame to increase the number of supported paths.\r\n```",
       "createdAt": "2024-03-12T13:05:07Z",
-      "updatedAt": "2024-03-17T10:23:31Z",
+      "updatedAt": "2024-05-08T15:45:45Z",
       "closedAt": null,
-      "comments": []
+      "comments": [
+        {
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "body": "Do we actually have consensus that the same path ID is used in both directions? If so, can people review PR #315 please! Thanks!",
+          "createdAt": "2024-05-08T15:45:43Z",
+          "updatedAt": "2024-05-08T15:45:43Z"
+        }
+      ]
     },
     {
       "number": 295,
@@ -30820,13 +30828,13 @@
       "labels": [],
       "body": "Solving issue #294 ",
       "createdAt": "2024-03-17T10:15:59Z",
-      "updatedAt": "2024-04-01T03:52:54Z",
+      "updatedAt": "2024-05-08T15:56:39Z",
       "baseRepository": "quicwg/multipath",
       "baseRefName": "main",
-      "baseRefOid": "da86c1ed2f87f0e795b53382b4df0a2f6a2510df",
+      "baseRefOid": "e930829818ff3a52042bfa5195d8375a1dd9c4c1",
       "headRepository": "quicwg/multipath",
       "headRefName": "dev/path_id_for_both_direction",
-      "headRefOid": "0cdd5597c4d3b9245ef421418da5a28730d30a6c",
+      "headRefOid": "d7426a297f37ce0525d631799ea420c50dd46480",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
@@ -30958,6 +30966,66 @@
               "updatedAt": "2024-03-21T16:18:41Z"
             }
           ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM558-1o",
+          "commit": {
+            "abbreviatedOid": "0cdd559"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-08T15:41:19Z",
+          "updatedAt": "2024-05-08T15:41:20Z",
+          "comments": [
+            {
+              "originalPosition": 14,
+              "body": "I think the client should only try to open a path if it had send CIDs for that path ID (and the reception has been ack'ed). Then if the server received a path challenges for a path ID it doesn't have a CID for, it should either be an error or it should send a path abandon on another path.",
+              "createdAt": "2024-05-08T15:41:20Z",
+              "updatedAt": "2024-05-08T15:41:20Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM558_NK",
+          "commit": {
+            "abbreviatedOid": "0cdd559"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-08T15:42:03Z",
+          "updatedAt": "2024-05-08T15:42:03Z",
+          "comments": [
+            {
+              "originalPosition": 23,
+              "body": "```suggestion\r\nPATH_ABANDON frame causes all CID allocated by both of the endpoints for the specified Path ID to be retired.\r\n```",
+              "createdAt": "2024-05-08T15:42:03Z",
+              "updatedAt": "2024-05-08T15:42:03Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM559AKI",
+          "commit": {
+            "abbreviatedOid": "0cdd559"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-08T15:43:49Z",
+          "updatedAt": "2024-05-08T15:43:49Z",
+          "comments": [
+            {
+              "originalPosition": 26,
+              "body": "```suggestion\r\nWhen path validation of a new path fails, the used Path ID is anyway consumed, \r\nand the endpoint MUST abandon the path by sending a PATH_ABANDON frame\r\non another path to inform the peer that the Path ID cannot be used anymore.\r\n```",
+              "createdAt": "2024-05-08T15:43:49Z",
+              "updatedAt": "2024-05-08T15:44:04Z"
+            }
+          ]
         }
       ]
     },
@@ -31057,7 +31125,7 @@
       "labels": [],
       "body": "During the IETF 119 meeting, we decided to split the path identifier space into even numbers for client initiated paths and odd numbers for server initiated paths. This PR implement the requested changes.",
       "createdAt": "2024-04-05T17:49:00Z",
-      "updatedAt": "2024-04-17T18:05:49Z",
+      "updatedAt": "2024-05-08T20:29:52Z",
       "baseRepository": "quicwg/multipath",
       "baseRefName": "main",
       "baseRefOid": "e930829818ff3a52042bfa5195d8375a1dd9c4c1",
@@ -31124,6 +31192,48 @@
           "body": "Check PR #331 as a much simpler way to reserve even path identifiers for future extension.",
           "createdAt": "2024-04-17T18:05:48Z",
           "updatedAt": "2024-04-17T18:05:48Z"
+        },
+        {
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "body": "Just double-checking: this PR proposed two transport parameters. If that is needed it doesn't make a technical difference if they are defined in the same spec or as an extension later.\r\n\r\nHowever, it is not fully clear to me why two parameters are needed. Each endpoint needs to announce the max-path value (for one half of the path id space) but they could use the same transport parameter in each direction. Or why not?",
+          "createdAt": "2024-05-07T17:13:21Z",
+          "updatedAt": "2024-05-07T17:13:21Z"
+        },
+        {
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "body": "Also, maybe I now manager to fully confuse myself, but why do we need the max path limit at all. I thought everything endpoint can implicitly control the max number of paths but not providing CID for more paths...?",
+          "createdAt": "2024-05-07T17:20:37Z",
+          "updatedAt": "2024-05-07T17:20:37Z"
+        },
+        {
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "body": "one more addition: My comments assume that the same path ID is used in both direction and always opens a bidirectional path and therefore both endpoint need to provide the respective CIDs first before you can open the paths. Note that this is connected to PR #315 and issue #294.",
+          "createdAt": "2024-05-07T17:24:20Z",
+          "updatedAt": "2024-05-07T17:24:20Z"
+        },
+        {
+          "author": "huitema",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "@mirjak I agree with the general comment that \"if we need two parameters, we should just define one now, and leave the other for an extension. \" That why I wrote a simpler proposal in PR #331. Can you review that too?\r\n\r\nSee [previous discussion](https://github.com/quicwg/multipath/pull/329#issuecomment-2048565142) for why we need two MAX PATHS.\r\n",
+          "createdAt": "2024-05-07T18:49:41Z",
+          "updatedAt": "2024-05-07T18:49:41Z"
+        },
+        {
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "body": "@huitema I read the previous discussion, however, it's still not clear to me. If the same path ID has to be used for a path in both directions, that means for me that you need to get CIDs for a path ID from both endpoints before you can start using that path ID. That means both sides have a way to control the maximum number of paths by only providing a certain number of path IDs even without the MAX_PATHS limit. Or what do I miss?",
+          "createdAt": "2024-05-08T15:16:31Z",
+          "updatedAt": "2024-05-08T15:16:31Z"
+        },
+        {
+          "author": "huitema",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "@mirjak Suppose the client publishes \"max server initiated paths = 1,000,000,000\", and proceeds to send MP_NEW_CONNECTION_IDs for all these paths. How is the server able to limit the number of CIDs that it will accept? ",
+          "createdAt": "2024-05-08T20:29:51Z",
+          "updatedAt": "2024-05-08T20:29:51Z"
         }
       ],
       "reviews": [
