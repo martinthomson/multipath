@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-05-09T00:42:09.093783+00:00",
+  "timestamp": "2024-05-12T00:46:19.371943+00:00",
   "repo": "quicwg/multipath",
   "labels": [
     {
@@ -31125,7 +31125,7 @@
       "labels": [],
       "body": "During the IETF 119 meeting, we decided to split the path identifier space into even numbers for client initiated paths and odd numbers for server initiated paths. This PR implement the requested changes.",
       "createdAt": "2024-04-05T17:49:00Z",
-      "updatedAt": "2024-05-08T20:29:52Z",
+      "updatedAt": "2024-05-10T13:24:40Z",
       "baseRepository": "quicwg/multipath",
       "baseRefName": "main",
       "baseRefOid": "e930829818ff3a52042bfa5195d8375a1dd9c4c1",
@@ -31234,6 +31234,20 @@
           "body": "@mirjak Suppose the client publishes \"max server initiated paths = 1,000,000,000\", and proceeds to send MP_NEW_CONNECTION_IDs for all these paths. How is the server able to limit the number of CIDs that it will accept? ",
           "createdAt": "2024-05-08T20:29:51Z",
           "updatedAt": "2024-05-08T20:29:51Z"
+        },
+        {
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "body": "Ah I didn't realize that we changed the active_connection_id_limit to be now per path. Is that really necessary or the correct thing to do?\r\n\r\nIf we can keep active_connection_id_limit to limit the total numbers of CID an endpoint is willing to maintain (because maintaining with or without a path ID associated to the CID is not really a difference), each endpoint can still control the maximum number of paths but announcing CIDs respectively.",
+          "createdAt": "2024-05-10T09:31:56Z",
+          "updatedAt": "2024-05-10T09:31:56Z"
+        },
+        {
+          "author": "huitema",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "@mirjak Why don't you open an issue about reversing the decision to make max-CID a path property, versus a global property?\r\n\r\nIn the short term, given the uncertainties, my proposal would be to close this PR, and focus on PR #331 instead?",
+          "createdAt": "2024-05-10T13:24:40Z",
+          "updatedAt": "2024-05-10T13:24:40Z"
         }
       ],
       "reviews": [
