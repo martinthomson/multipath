@@ -5,7 +5,7 @@
 QUIC Working Group                                  刘彦梅 (Y. Liu), Ed.
 Internet-Draft                                              Alibaba Inc.
 Intended status: Standards Track                          马云飞 (Y. Ma)
-Expires: 13 October 2024                          Uber Technologies Inc.
+Expires: 15 November 2024                         Uber Technologies Inc.
                                                       Q. De Coninck, Ed.
                                               University of Mons (UMONS)
                                                           O. Bonaventure
@@ -14,7 +14,7 @@ Expires: 13 October 2024                          Uber Technologies Inc.
                                                     Private Octopus Inc.
                                                       M. Kuehlewind, Ed.
                                                                 Ericsson
-                                                           11 April 2024
+                                                             14 May 2024
 
 
                       Multipath Extension for QUIC
@@ -52,7 +52,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 13 October 2024.
+   This Internet-Draft will expire on 15 November 2024.
 
 Copyright Notice
 
@@ -381,9 +381,26 @@ Table of Contents
    does not change the path ID.
 
    Endpoints use PATH_ABANDON frame to inform the peer of the retirement
-   of associated Path Identifier.  When there is not enough unused Path
-   Identifiers, endpoints SHOULD send MAX_PATHS frame to inform the peer
-   that new Path Identifiers are available.
+   of associated Path Identifier.
+
+   When there is not enough unused Path Identifiers, endpoints SHOULD
+   send MAX_PATHS frame to inform the peer that new Path Identifiers are
+   available.  For example, the server sends MAX_PATHS to raise the
+   maximum path number that it is willing to accept, the client sends
+   MAX_PATHS to raise the maximum path number that it is willing to
+   create.
+
+   Endpoints MUST NOT issue new Connection ID with Path ID larger than
+   the minimum of MAX_PATHS announced by both endpoints.  For example,
+   the server sends MP_NEW_CONNECTION_ID frame containing Path ID up to
+   the minimum of MAX_PATHS issued by client and server.  The client
+   sends MP_NEW_CONNECTION_ID frame containing Path ID up to the minimum
+   of MAX_PATHS issued by each sides.
+
+   If an endpoint receives a MP_NEW_CONNECTION_ID frame containing Path
+   ID larger than the minimum of MAX_PATHS announced by each sides, it
+   MUST treat this as a connection error of type MP_PROTOCOL_VIOLATION
+   and close the connection.
 
 5.  Path Setup and Removal
 
@@ -1676,6 +1693,13 @@ Client                                                      Server
               issues and a possible solution", Proceedings of the 8th
               international conference on Emerging networking
               experiments and technologies, ACM , 2012.
+
+   [QUIC-Timestamp]
+              Huitema, C., "Quic Timestamps For Measuring One-Way
+              Delays", Work in Progress, Internet-Draft, draft-huitema-
+              quic-ts-08, 28 August 2022,
+              <https://datatracker.ietf.org/doc/html/draft-huitema-quic-
+              ts-08>.
 
    [RFC6356]  Raiciu, C., Handley, M., and D. Wischik, "Coupled
               Congestion Control for Multipath Transport Protocols",
