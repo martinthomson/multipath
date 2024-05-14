@@ -1318,9 +1318,7 @@ Client                                                      Server
 
    PATH_ABANDON frames contain the following fields:
 
-   Path Identifier:  The Path Identifier of the Destination Connection
-      ID used by the receiver of the frame to send packets over the path
-      to abandon.
+   Path Identifier:  The Path Identifier to abandon.
 
    Error Code:  A variable-length integer that indicates the reason for
       abandoning this path.
@@ -1357,11 +1355,9 @@ Client                                                      Server
 
    PATH_STANDBY Frames contain the following fields:
 
-   Path Identifier:  The Path Identifier of the Destination Connection
-      ID used by the receiver of this frame to send packets over the
-      path the status update corresponds to.  All Destination Connection
-      IDs that have been issued MAY be specified, even if they are not
-      yet in use over a path.
+   Path Identifier:  The Path Identifier the status update corresponds
+      to.  All Destination Connection IDs that have been issued MAY be
+      specified, even if they are not yet in use over a path.
 
    Path Status sequence number:  A variable-length integer specifying
       the sequence number assigned for this PATH_STANDBY frame.  The
@@ -1403,9 +1399,8 @@ Client                                                      Server
 
    PATH_AVAILABLE frames contain the following fields:
 
-   Path Identifier:  The Path Identifier of the Destination Connection
-      ID used by the receiver of this frame to send packets over the
-      path the status update corresponds to.
+   Path Identifier:  The Path Identifier the status update corresponds
+      to.
 
    Path Status sequence number:  A variable-length integer specifying
       the sequence number assigned for this PATH_AVAILABLE frame.  The
