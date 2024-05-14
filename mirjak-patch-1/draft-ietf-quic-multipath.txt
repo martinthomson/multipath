@@ -170,7 +170,7 @@ Table of Contents
    requires negotiation between the two endpoints using a new transport
    parameter, as specified in Section 3.
 
-   This extension specifies a new Path Identifier (Path ID), which is
+   This extension specifies a new Path Identifier (Path ID), which is an
    integer between 0 and 2^32 - 1 (inclusive).  Path identifies are
    generated monotonically increasing and cannot be reused.
 
