@@ -5,7 +5,7 @@
 QUIC Working Group                                  刘彦梅 (Y. Liu), Ed.
 Internet-Draft                                              Alibaba Inc.
 Intended status: Standards Track                          马云飞 (Y. Ma)
-Expires: 15 November 2024                         Uber Technologies Inc.
+Expires: 18 November 2024                         Uber Technologies Inc.
                                                       Q. De Coninck, Ed.
                                               University of Mons (UMONS)
                                                           O. Bonaventure
@@ -14,7 +14,7 @@ Expires: 15 November 2024                         Uber Technologies Inc.
                                                     Private Octopus Inc.
                                                       M. Kuehlewind, Ed.
                                                                 Ericsson
-                                                             14 May 2024
+                                                             17 May 2024
 
 
                       Multipath Extension for QUIC
@@ -52,7 +52,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 15 November 2024.
+   This Internet-Draft will expire on 18 November 2024.
 
 Copyright Notice
 
@@ -367,15 +367,15 @@ Table of Contents
 
    Endpoints use the same Path ID for one specific path in both
    directions.  For a client-initiated path, the client decides which
-   Path ID used for the new path, it picks one of the server allocated
-   CID with the specified Path ID.  Then the client send a
+   Path ID is used for the new path by picking one of the server
+   allocated CID with the specified Path ID.  Then, the client sends a
    PATH_CHALLENGE with the chosen CID.  If the server receives the
    PATH_CHALLENGE, it picks a Connection ID with the same path ID for
    sending the PATH_RESPONSE.
 
    The client MUST choose a previously unused Path ID for which both
    endpoints have already issued at least one connection ID.  If the
-   server receives a PATH_CHALLENGE before receiving
+   server receives a PATH_CHALLENGE before receiving a
    MP_NEW_CONNECTION_ID for the specific path, it MAY choose to ignore
    the PATH_CHALLENGE, or it can choose to send the PATH_RESPONSE frame
    upon reception of a MP_NEW_CONNECTION_ID frame containing the
