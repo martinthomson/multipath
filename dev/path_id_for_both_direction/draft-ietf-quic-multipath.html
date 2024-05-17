@@ -1744,7 +1744,7 @@ does not necessarily advertise path abandon (see <a href="#retire-cid-close" cla
 However, implicit signals such as idle time or packet losses might be
 the only way for an endhost to detect path closure (see
 <a href="#idle-time-close" class="auto internal xref">Section 5.3.5</a>).<a href="#section-5.3-2" class="pilcrow">¶</a></p>
-<p id="section-5.3-3">PATH_ABANDON frame causes all the CID allocated for the specified Path ID to be retired.<a href="#section-5.3-3" class="pilcrow">¶</a></p>
+<p id="section-5.3-3">PATH_ABANDON frame causes all CID allocated by both of the endpoints for the specified Path ID to be retired.<a href="#section-5.3-3" class="pilcrow">¶</a></p>
 <p id="section-5.3-4">When path validation of a new path fails, the client MUST consider the Path ID as consumed, and MUST abandon the path by sending a PATH_ABANDON frame.
 to inform the server that the Path ID can’t be used in the future.<a href="#section-5.3-4" class="pilcrow">¶</a></p>
 <p id="section-5.3-5">Note that other explicit closing mechanisms of <span>[<a href="#QUIC-TRANSPORT" class="cite xref">QUIC-TRANSPORT</a>]</span> still
