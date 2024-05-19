@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-05-16T00:42:21.367583+00:00",
+  "timestamp": "2024-05-19T00:46:31.221629+00:00",
   "repo": "quicwg/multipath",
   "labels": [
     {
@@ -9291,6 +9291,33 @@
           "body": "I was actually rather trying to avoid the term \"Multipath QUIC\" (or \"QUIC Multipath\") and rather tried to talk about the multipath extension or multipath support, to explicitly indicate that this is not a new/different protocol but really just an extension and part of QUIC (similar as datagram support is also just an extension). I know the terms are still a few time in the draft but these are mainly left overs from the initial merger of the different drafts. This still needs some editorial clean-up.",
           "createdAt": "2024-05-14T17:04:06Z",
           "updatedAt": "2024-05-14T17:04:06Z"
+        }
+      ]
+    },
+    {
+      "number": 336,
+      "id": "I_kwDOGNtpaM6JOveO",
+      "title": "How should the receiver react if it receives Connection IDs for non-authorised paths IDs?",
+      "url": "https://github.com/quicwg/multipath/issues/336",
+      "state": "OPEN",
+      "author": "mirjak",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [
+        "design",
+        "explicit path ID"
+      ],
+      "body": " Closing the connection with some MP_PROTOCOL_VIOLATION error?",
+      "createdAt": "2024-05-17T10:17:02Z",
+      "updatedAt": "2024-05-17T12:45:47Z",
+      "closedAt": null,
+      "comments": [
+        {
+          "author": "michael-eriksson",
+          "authorAssociation": "NONE",
+          "body": "Yes.\r\n\r\nA side note: I don't really see the point of `MP_PROTOCOL_VIOLATION`; why is RFC 9000's `PROTOCOL_VIOLATION` not good enough?",
+          "createdAt": "2024-05-17T12:45:46Z",
+          "updatedAt": "2024-05-17T12:45:46Z"
         }
       ]
     }
@@ -31100,13 +31127,13 @@
       "labels": [],
       "body": "Solving issue #294 ",
       "createdAt": "2024-03-17T10:15:59Z",
-      "updatedAt": "2024-05-14T16:31:29Z",
+      "updatedAt": "2024-05-17T11:54:19Z",
       "baseRepository": "quicwg/multipath",
       "baseRefName": "main",
       "baseRefOid": "e930829818ff3a52042bfa5195d8375a1dd9c4c1",
       "headRepository": "quicwg/multipath",
       "headRefName": "dev/path_id_for_both_direction",
-      "headRefOid": "479de5ef912b53ebbe3e81d16f4394719a4fccfc",
+      "headRefOid": "d20519b0e74d753a8d9f549ec3b090c7293c5246",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
@@ -31296,6 +31323,84 @@
               "body": "```suggestion\r\nWhen path validation of a new path fails, the used Path ID is anyway consumed, \r\nand the endpoint MUST abandon the path by sending a PATH_ABANDON frame\r\non another path to inform the peer that the Path ID cannot be used anymore.\r\n```",
               "createdAt": "2024-05-08T15:43:49Z",
               "updatedAt": "2024-05-08T15:44:04Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM567mY9",
+          "commit": {
+            "abbreviatedOid": "479de5e"
+          },
+          "author": "qdeconinck",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "Some typos fixes.",
+          "createdAt": "2024-05-17T06:37:24Z",
+          "updatedAt": "2024-05-17T06:48:15Z",
+          "comments": [
+            {
+              "originalPosition": 7,
+              "body": "```suggestion\r\nFor a client-initiated path, the client decides which Path ID is used for the new path\r\nby picking one of the server allocated CID with the specified Path ID.\r\n```",
+              "createdAt": "2024-05-17T06:37:24Z",
+              "updatedAt": "2024-05-17T06:48:15Z"
+            },
+            {
+              "originalPosition": 8,
+              "body": "```suggestion\r\nThen, the client sends a PATH_CHALLENGE with the chosen CID. If the server receives the PATH_CHALLENGE,\r\n```",
+              "createdAt": "2024-05-17T06:37:55Z",
+              "updatedAt": "2024-05-17T06:48:15Z"
+            },
+            {
+              "originalPosition": 13,
+              "body": "```suggestion\r\nIf the server receives a PATH_CHALLENGE before receiving a MP_NEW_CONNECTION_ID\r\nfor the specific path, it MAY choose to ignore the PATH_CHALLENGE, or it can\r\n```",
+              "createdAt": "2024-05-17T06:40:53Z",
+              "updatedAt": "2024-05-17T06:48:15Z"
+            },
+            {
+              "originalPosition": 14,
+              "body": "> I think the client should only try to open a path if it had send CIDs for that path ID (and the reception has been ack'ed).\r\n\r\nWe could be in the situation where the server has sent MP_NEW_CONNECTION_ID frames to the client, and the client wants to open a new path by sending a PATH_CHALLENGE along with a MP_NEW_CONNECTION_ID frame with the associated Path ID.",
+              "createdAt": "2024-05-17T06:46:00Z",
+              "updatedAt": "2024-05-17T06:48:15Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM569D_X",
+          "commit": {
+            "abbreviatedOid": "479de5e"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-17T09:42:42Z",
+          "updatedAt": "2024-05-17T09:42:42Z",
+          "comments": [
+            {
+              "originalPosition": 14,
+              "body": "Yes sending it in the same packet is fine as well because than it cannot be lost or reordered separately.",
+              "createdAt": "2024-05-17T09:42:42Z",
+              "updatedAt": "2024-05-17T09:42:42Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM56-YyK",
+          "commit": {
+            "abbreviatedOid": "d877959"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-17T11:54:06Z",
+          "updatedAt": "2024-05-17T11:54:07Z",
+          "comments": [
+            {
+              "originalPosition": 26,
+              "body": "```suggestion\r\nWhen path validation of a new path fails, the used Path ID is anyway consumed,\r\n```",
+              "createdAt": "2024-05-17T11:54:06Z",
+              "updatedAt": "2024-05-17T11:54:07Z"
             }
           ]
         }
@@ -31941,18 +32046,26 @@
       "labels": [],
       "body": "I mainly merged the \"Path identifier\" section into the right place in the rest of the document. Having such a separate section did repeat the same things multiple time. That is usually very unfortunate because that means you have to change things in multiple places.\r\n\r\nFurther, some smaller editorial issue in the rest of the document.\r\n\r\nThis is only a first pass, I think we need more iterations.",
       "createdAt": "2024-05-14T16:01:57Z",
-      "updatedAt": "2024-05-15T07:53:53Z",
+      "updatedAt": "2024-05-17T11:53:00Z",
       "baseRepository": "quicwg/multipath",
       "baseRefName": "main",
       "baseRefOid": "e930829818ff3a52042bfa5195d8375a1dd9c4c1",
       "headRepository": "quicwg/multipath",
       "headRefName": "mirjak-patch-1",
-      "headRefOid": "3247feaa2e52329ef2924173b0102c08285a0707",
+      "headRefOid": "daa270db5f410095a7c50f2017b9c800809438ca",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
       "mergeCommit": null,
-      "comments": [],
+      "comments": [
+        {
+          "author": "Yanmei-Liu",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "Thanks a lot for all these work! Some minor suggestions.",
+          "createdAt": "2024-05-17T11:47:06Z",
+          "updatedAt": "2024-05-17T11:47:06Z"
+        }
+      ],
       "reviews": [
         {
           "id": "PRR_kwDOGNtpaM56itRg",
@@ -31971,6 +32084,224 @@
               "body": "```suggestion\r\nThis extension specifies a new Path Identifier (Path ID), which is an\r\n```",
               "createdAt": "2024-05-14T16:40:33Z",
               "updatedAt": "2024-05-14T16:40:33Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM56uXDr",
+          "commit": {
+            "abbreviatedOid": "3247fea"
+          },
+          "author": "huitema",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "Looks good. Minor comments only.",
+          "createdAt": "2024-05-15T20:38:58Z",
+          "updatedAt": "2024-05-16T00:48:26Z",
+          "comments": [
+            {
+              "originalPosition": 25,
+              "body": "There is something missing in the first line of that paragraph. Maybe: \"The Path ID is used to\r\naddress a path *in* the new multipath control frames,\"\r\n",
+              "createdAt": "2024-05-15T20:38:58Z",
+              "updatedAt": "2024-05-16T00:48:26Z"
+            },
+            {
+              "originalPosition": 100,
+              "body": "Replace \"to a path identifier. And\" by \"to a path identifier, and\" ? Classic editing rule is to not start a sentence by a conjunction.",
+              "createdAt": "2024-05-15T20:42:10Z",
+              "updatedAt": "2024-05-16T00:48:26Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM567agl",
+          "commit": {
+            "abbreviatedOid": "3247fea"
+          },
+          "author": "qdeconinck",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "This makes the draft a bit more readable. Some suggestions for typos + clarification purposes.",
+          "createdAt": "2024-05-17T05:58:21Z",
+          "updatedAt": "2024-05-17T06:35:11Z",
+          "comments": [
+            {
+              "originalPosition": 20,
+              "body": "```suggestion\r\nThe Path ID is used to\r\naddress a path in the new multipath control frames,\r\n```",
+              "createdAt": "2024-05-17T05:58:21Z",
+              "updatedAt": "2024-05-17T06:35:11Z"
+            },
+            {
+              "originalPosition": 28,
+              "body": "```suggestion\r\nwhich are issued by a NEW_CONNECTION_ID frame {{Section 19.15. of QUIC-TRANSPORT}}\r\n```",
+              "createdAt": "2024-05-17T05:59:09Z",
+              "updatedAt": "2024-05-17T06:35:11Z"
+            },
+            {
+              "originalPosition": 35,
+              "body": "I think I understand the meaning here, but the definition of \"packet number space\" in the first sentence (one per path) is not coherent with the second one (one per direction over a path). Here is a first try to better describe this, but I think we could do better.\r\n\r\n```suggestion\r\nThis extension uses multiple packet number spaces, one for each active path.\r\nAs such, each path maintains distinct packet number states for sending and receiving packets, as in {{QUIC-TRANSPORT}}.\r\n```",
+              "createdAt": "2024-05-17T06:05:37Z",
+              "updatedAt": "2024-05-17T06:35:11Z"
+            },
+            {
+              "originalPosition": 38,
+              "body": "```suggestion\r\n{{QUIC-RECOVERY}} on a per-path basis.\r\n```",
+              "createdAt": "2024-05-17T06:06:10Z",
+              "updatedAt": "2024-05-17T06:35:11Z"
+            },
+            {
+              "originalPosition": 44,
+              "body": "```suggestion\r\nconstruct the packet protection nonce defined in {{multipath-aead}}.\r\n```",
+              "createdAt": "2024-05-17T06:06:49Z",
+              "updatedAt": "2024-05-17T06:35:11Z"
+            },
+            {
+              "originalPosition": 95,
+              "body": "Agree with @huitema that it does not read well. What about this?\r\n\r\n```suggestion\r\nThe connection ID of a packet binds the packet to a path identifier, and therefore\r\nto a packet number space.\r\n```",
+              "createdAt": "2024-05-17T06:11:36Z",
+              "updatedAt": "2024-05-17T06:35:11Z"
+            },
+            {
+              "originalPosition": 208,
+              "body": "I think we should clarify that we discuss Path ID 0 here. By design, proposing new connection IDs on other Path IDs is only possible using MP_NEW_CONNECTION_ID.",
+              "createdAt": "2024-05-17T06:14:15Z",
+              "updatedAt": "2024-05-17T06:35:11Z"
+            },
+            {
+              "originalPosition": 212,
+              "body": "I think this is a bit ambiguous here, as the current text does not specify whether it refers to the value advertised by the sender, the receiver, or the minimum of both. To me, we should clarify this is relative to the value advertised by the peer.\r\n\r\n```suggestion\r\nEndpoints MUST NOT issue connection IDs with path identifiers larger than\r\nthe path limitation advertised by the peer, corresponding to the maximum value\r\nbetween the peer's initial_max_paths transport parameter and received\r\nMAX_PATHS frames.\r\n```\r\n\r\nAlso, I would expect discussing here how the receiver should react if it receives Connection IDs for non-authorised paths IDs. Closing the connection with some MP_PROTOCOL_VIOLATION error?",
+              "createdAt": "2024-05-17T06:20:40Z",
+              "updatedAt": "2024-05-17T06:35:11Z"
+            },
+            {
+              "originalPosition": 217,
+              "body": "A typo. Also, given that we restrict now to only client-initiated paths, we could replace \"endpoint\" by \"client\". Then, we could specify that the server can reply to such path opening by sending packets with the newly seen Path ID on the perceived network path.\r\n\r\n```suggestion\r\nTo open a new path, an endpoint MUST use a connection ID associated with\r\n```",
+              "createdAt": "2024-05-17T06:22:56Z",
+              "updatedAt": "2024-05-17T06:35:11Z"
+            },
+            {
+              "originalPosition": 244,
+              "body": "Just to clarify, but feel free to ignore if you do not think it is useful.\r\n```suggestion\r\neach endpoint uses MP_NEW_CONNECTION_ID frames\r\nto issue usable Path ID-specific connections IDs to reach it. As such to open\r\n```",
+              "createdAt": "2024-05-17T06:27:16Z",
+              "updatedAt": "2024-05-17T06:35:11Z"
+            },
+            {
+              "originalPosition": 400,
+              "body": "```suggestion\r\nthe endpoint SHOULD send a PATH_ABANDON frame before closing the path.\r\n```",
+              "createdAt": "2024-05-17T06:28:51Z",
+              "updatedAt": "2024-05-17T06:35:11Z"
+            },
+            {
+              "originalPosition": 524,
+              "body": "The current formulation is a bit implicit about what is meant by \"reused\". What about this? In my opinion, we could also drop the \"even on other network paths\" part.\r\n```suggestion\r\nendpoints MUST NOT send packets associated with that Path ID anymore,\r\neven on other network paths.\r\n```",
+              "createdAt": "2024-05-17T06:33:30Z",
+              "updatedAt": "2024-05-17T06:35:11Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM569XeR",
+          "commit": {
+            "abbreviatedOid": "daa270d"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-17T10:12:03Z",
+          "updatedAt": "2024-05-17T10:12:03Z",
+          "comments": [
+            {
+              "originalPosition": 212,
+              "body": "```suggestion\r\nfor at least one unused path identifier. Connection IDs for paths with Path IDs\r\nother than 0, can only be announced and retired with the new\r\nMP_NEW_CONNECTION_ID and MP_RETIRE_CONNECTION_ID frames.\r\nAfter a successful handshake indicating multipath support by both endpoints,\r\nendpoints SHOULD also use the MP_NEW_CONNECTION_ID and\r\nMP_RETIRE_CONNECTION_ID frames to provide new connection IDs\r\nor, respectively, retire them for the initial path with Path ID 0.\r\n```",
+              "createdAt": "2024-05-17T10:12:03Z",
+              "updatedAt": "2024-05-17T10:13:12Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM569YBn",
+          "commit": {
+            "abbreviatedOid": "daa270d"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-17T10:13:22Z",
+          "updatedAt": "2024-05-17T10:13:22Z",
+          "comments": [
+            {
+              "originalPosition": 208,
+              "body": "see below. Okay?",
+              "createdAt": "2024-05-17T10:13:22Z",
+              "updatedAt": "2024-05-17T10:13:22Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM566vNK",
+          "commit": {
+            "abbreviatedOid": "daa270d"
+          },
+          "author": "Yanmei-Liu",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-17T02:31:04Z",
+          "updatedAt": "2024-05-17T11:44:51Z",
+          "comments": [
+            {
+              "originalPosition": 52,
+              "body": "The path ID is a new concept which differs from RFC9000. I think it's better to update the definition of path and path id, but not to delete all this definition of the new concept.",
+              "createdAt": "2024-05-17T11:37:39Z",
+              "updatedAt": "2024-05-17T11:44:51Z"
+            },
+            {
+              "originalPosition": 30,
+              "body": "```suggestion\r\nthe connection ID specified in the \"preferred address\" transport parameter is 2.\r\n```",
+              "createdAt": "2024-05-17T11:43:06Z",
+              "updatedAt": "2024-05-17T11:44:51Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM56-XTK",
+          "commit": {
+            "abbreviatedOid": "daa270d"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-17T11:51:45Z",
+          "updatedAt": "2024-05-17T11:51:45Z",
+          "comments": [
+            {
+              "originalPosition": 52,
+              "body": " it's already covered in the intro now.",
+              "createdAt": "2024-05-17T11:51:45Z",
+              "updatedAt": "2024-05-17T11:51:45Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM56-YLL",
+          "commit": {
+            "abbreviatedOid": "daa270d"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-17T11:53:00Z",
+          "updatedAt": "2024-05-17T11:53:00Z",
+          "comments": [
+            {
+              "originalPosition": 30,
+              "body": "I think this change needs discussion. See issue #317 ",
+              "createdAt": "2024-05-17T11:53:00Z",
+              "updatedAt": "2024-05-17T11:53:00Z"
             }
           ]
         }
