@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-05-19T00:46:31.221629+00:00",
+  "timestamp": "2024-05-21T00:42:57.124797+00:00",
   "repo": "quicwg/multipath",
   "labels": [
     {
@@ -32046,7 +32046,7 @@
       "labels": [],
       "body": "I mainly merged the \"Path identifier\" section into the right place in the rest of the document. Having such a separate section did repeat the same things multiple time. That is usually very unfortunate because that means you have to change things in multiple places.\r\n\r\nFurther, some smaller editorial issue in the rest of the document.\r\n\r\nThis is only a first pass, I think we need more iterations.",
       "createdAt": "2024-05-14T16:01:57Z",
-      "updatedAt": "2024-05-17T11:53:00Z",
+      "updatedAt": "2024-05-20T04:20:26Z",
       "baseRepository": "quicwg/multipath",
       "baseRefName": "main",
       "baseRefOid": "e930829818ff3a52042bfa5195d8375a1dd9c4c1",
@@ -32302,6 +32302,125 @@
               "body": "I think this change needs discussion. See issue #317 ",
               "createdAt": "2024-05-17T11:53:00Z",
               "updatedAt": "2024-05-17T11:53:00Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM57Ga_K",
+          "commit": {
+            "abbreviatedOid": "daa270d"
+          },
+          "author": "Yanmei-Liu",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2024-05-20T03:33:00Z",
+          "updatedAt": "2024-05-20T03:33:00Z",
+          "comments": []
+        },
+        {
+          "id": "PRR_kwDOGNtpaM57Gc4c",
+          "commit": {
+            "abbreviatedOid": "daa270d"
+          },
+          "author": "marten-seemann",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-20T03:46:33Z",
+          "updatedAt": "2024-05-20T04:08:21Z",
+          "comments": [
+            {
+              "originalPosition": 5,
+              "body": "```suggestion\r\nlength connection IDs in both directions.\r\n```",
+              "createdAt": "2024-05-20T03:46:34Z",
+              "updatedAt": "2024-05-20T04:08:21Z"
+            },
+            {
+              "originalPosition": 23,
+              "body": "```suggestion\r\nFurther, connection IDs are issued per Path ID.\r\n```",
+              "createdAt": "2024-05-20T03:47:49Z",
+              "updatedAt": "2024-05-20T04:08:21Z"
+            },
+            {
+              "originalPosition": 44,
+              "body": "This sentence seems out of place here. Maybe just delete it?",
+              "createdAt": "2024-05-20T03:50:19Z",
+              "updatedAt": "2024-05-20T04:08:21Z"
+            },
+            {
+              "originalPosition": 118,
+              "body": "```suggestion\r\nMUST use non-zero length Source and Destination Connection IDs.\r\n```",
+              "createdAt": "2024-05-20T03:52:40Z",
+              "updatedAt": "2024-05-20T04:08:22Z"
+            },
+            {
+              "originalPosition": 133,
+              "body": "```suggestion\r\nThe active_connection_id_limit transport parameter\r\n```",
+              "createdAt": "2024-05-20T03:53:15Z",
+              "updatedAt": "2024-05-20T04:08:22Z"
+            },
+            {
+              "originalPosition": 212,
+              "body": "I don't understand the motivation behind\r\n> After a successful handshake indicating multipath support by both endpoints,\r\n\tendpoints SHOULD also use the MP_NEW_CONNECTION_ID and\r\n\tMP_RETIRE_CONNECTION_ID frames to provide new connection IDs\r\n\tor, respectively, retire them for the initial path with Path ID 0.\r\n\r\nWe can just say that MP_NEW_CONNECTION_ID with path ID 0 is equivalent to NEW_CONNECTION_ID. That's how we dealt with the fact that there's one bespoke value in RESET_STREAM_AT. It really doesn't matter which frame the peer uses, but in my code, I'd always go for the shortest encoding.",
+              "createdAt": "2024-05-20T03:55:44Z",
+              "updatedAt": "2024-05-20T04:08:22Z"
+            },
+            {
+              "originalPosition": 240,
+              "body": "The logic here doesn't really work out anymore, since CIDs are now bound to a path.",
+              "createdAt": "2024-05-20T04:02:11Z",
+              "updatedAt": "2024-05-20T04:08:22Z"
+            },
+            {
+              "originalPosition": 293,
+              "body": "That's incorrect. Multiple CIDs are associated with the same path ID.",
+              "createdAt": "2024-05-20T04:02:47Z",
+              "updatedAt": "2024-05-20T04:08:22Z"
+            },
+            {
+              "originalPosition": 335,
+              "body": "```suggestion\r\nconnection IDs will not retire the Path Identifier for the specific path.\r\n```",
+              "createdAt": "2024-05-20T04:05:04Z",
+              "updatedAt": "2024-05-20T04:08:22Z"
+            },
+            {
+              "originalPosition": 337,
+              "body": "I find this confusing, and I'm surprised one would even consider this. This is just plain RFC 9000 behavior.",
+              "createdAt": "2024-05-20T04:05:43Z",
+              "updatedAt": "2024-05-20T04:08:22Z"
+            },
+            {
+              "originalPosition": 343,
+              "body": "Same here, this is just RFC 9000. I don't think we need to call out anything specifically here.",
+              "createdAt": "2024-05-20T04:06:35Z",
+              "updatedAt": "2024-05-20T04:08:22Z"
+            },
+            {
+              "originalPosition": 400,
+              "body": "You don't necessarily send stream data.\r\n```suggestion\r\nthat the congestion control currently allow sending\r\n```",
+              "createdAt": "2024-05-20T04:07:33Z",
+              "updatedAt": "2024-05-20T04:08:22Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM57GjaC",
+          "commit": {
+            "abbreviatedOid": "daa270d"
+          },
+          "author": "huitema",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-20T04:20:26Z",
+          "updatedAt": "2024-05-20T04:20:26Z",
+          "comments": [
+            {
+              "originalPosition": 23,
+              "body": "We may discuss that later, but connection IDs are issued for the connection, because they must be unique withing the scope of the connection, and attached to a path-id.",
+              "createdAt": "2024-05-20T04:20:26Z",
+              "updatedAt": "2024-05-20T04:20:26Z"
             }
           ]
         }
