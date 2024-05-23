@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-05-21T00:42:57.124797+00:00",
+  "timestamp": "2024-05-23T00:42:43.577312+00:00",
   "repo": "quicwg/multipath",
   "labels": [
     {
@@ -9282,7 +9282,7 @@
       ],
       "body": "I'm starting to refer to this draft in multiple places, both inside and outside the IETF, and I would like to use a correct identifier, but I'm seeing this referred to as both \"Multipath QUIC\" and \"QUIC Multipath\"(*). The draft contains the string \"Multipath Extension for QUIC\" about 17 times, so I'm guessing you'd prefer \"Multipath QUIC\", but putting that in the draft would be helpful. \r\n\r\nIn addition, if there was a short abbreviation that people would be likely to include as a search term, that would also be helpful. \r\n\r\nIf you wanted to make me do the work on that, I'd be happy to submit a PR - just let me know. \r\n\r\n(*) Yes, this is a request for better marketing. I understand why it seems silly.  But I'm also seeing atrocities like \"multi-path QUIC\", because \"Multipath Extension for QUIC\" is accurate, but people are coming up with a shorter form on their own. ",
       "createdAt": "2024-05-14T16:45:25Z",
-      "updatedAt": "2024-05-14T17:04:07Z",
+      "updatedAt": "2024-05-21T20:01:32Z",
       "closedAt": null,
       "comments": [
         {
@@ -9291,6 +9291,20 @@
           "body": "I was actually rather trying to avoid the term \"Multipath QUIC\" (or \"QUIC Multipath\") and rather tried to talk about the multipath extension or multipath support, to explicitly indicate that this is not a new/different protocol but really just an extension and part of QUIC (similar as datagram support is also just an extension). I know the terms are still a few time in the draft but these are mainly left overs from the initial merger of the different drafts. This still needs some editorial clean-up.",
           "createdAt": "2024-05-14T17:04:06Z",
           "updatedAt": "2024-05-14T17:04:06Z"
+        },
+        {
+          "author": "SpencerDawkins",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "> I was actually rather trying to avoid the term \"Multipath QUIC\" (or \"QUIC Multipath\") and rather **tried to talk about the multipath extension or multipath support, to explicitly indicate that this is not a new/different protocol but really just an extension** and part of QUIC (similar as datagram support is also just an extension). I know the terms are still a few time in the draft but these are mainly left overs from the initial merger of the different drafts. This still needs some editorial clean-up.\r\n\r\nHi, @mirjak, the part in bold especially makes perfect sense to me. Would the authors be willing to consider changing the document title to \r\n\r\n> Multipath Extension for QUIC **(MP-QUIC)**\r\n\r\nwith no other changes requested?",
+          "createdAt": "2024-05-21T19:50:33Z",
+          "updatedAt": "2024-05-21T19:50:33Z"
+        },
+        {
+          "author": "huitema",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "@SpencerDawkins I understand that @mirjak does not want to use \"MP-QUIC\" or \"Multipath QUIC\" as some kind of brand. I think this is right: we are defining an extension to QUIC, not some kind of fork or QUIC. But by definition, adding a short name would give just that impression. The best way to avoid that would be to have no short name at all -- indeed extensions like \"datagram\" or \"ack frequency\" do not have short names. If we do pick a short term, I would specifically not use \"MP-QUIC\" or \"QUIC-MP\", because these are too damn close to being a brand. Maybe \"QUIC-ME\" for multipath extensions. But not saying anything is better.",
+          "createdAt": "2024-05-21T20:01:31Z",
+          "updatedAt": "2024-05-21T20:01:31Z"
         }
       ]
     },
@@ -32046,13 +32060,13 @@
       "labels": [],
       "body": "I mainly merged the \"Path identifier\" section into the right place in the rest of the document. Having such a separate section did repeat the same things multiple time. That is usually very unfortunate because that means you have to change things in multiple places.\r\n\r\nFurther, some smaller editorial issue in the rest of the document.\r\n\r\nThis is only a first pass, I think we need more iterations.",
       "createdAt": "2024-05-14T16:01:57Z",
-      "updatedAt": "2024-05-20T04:20:26Z",
+      "updatedAt": "2024-05-22T18:02:17Z",
       "baseRepository": "quicwg/multipath",
       "baseRefName": "main",
       "baseRefOid": "e930829818ff3a52042bfa5195d8375a1dd9c4c1",
       "headRepository": "quicwg/multipath",
       "headRefName": "mirjak-patch-1",
-      "headRefOid": "daa270db5f410095a7c50f2017b9c800809438ca",
+      "headRefOid": "1ad59f7287c3aa4fd9cf82772f833a7dda2ac32c",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
@@ -32421,6 +32435,406 @@
               "body": "We may discuss that later, but connection IDs are issued for the connection, because they must be unique withing the scope of the connection, and attached to a path-id.",
               "createdAt": "2024-05-20T04:20:26Z",
               "updatedAt": "2024-05-20T04:20:26Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM57SsNV",
+          "commit": {
+            "abbreviatedOid": "61b55b0"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-21T12:28:43Z",
+          "updatedAt": "2024-05-21T12:28:43Z",
+          "comments": [
+            {
+              "originalPosition": 45,
+              "body": "```suggestion\r\nUsing multiple packet number spaces requires changes in the way AEAD is\r\napplied for packet protection, as explained in {{multipath-aead}}. \r\nMore concretely, the path identifier is used to construct the\r\npacket protection nonce in addition to the packet number\r\nin order to enable use of the same packet number on different paths.\r\nFurther, tighter constraints for key updates are needed, as explained in {{multipath-key-update}}.\r\n```",
+              "createdAt": "2024-05-21T12:28:43Z",
+              "updatedAt": "2024-05-21T12:28:43Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM57StX_",
+          "commit": {
+            "abbreviatedOid": "61b55b0"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-21T12:30:57Z",
+          "updatedAt": "2024-05-21T12:30:57Z",
+          "comments": [
+            {
+              "originalPosition": 212,
+              "body": "True. However, this is meant to be an editorial PR. Given the SHOULD is already in the current version, maybe it cleaner to open and issue and then remove that eventually with a separate PR? ",
+              "createdAt": "2024-05-21T12:30:57Z",
+              "updatedAt": "2024-05-21T12:30:57Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM57Su7Q",
+          "commit": {
+            "abbreviatedOid": "61b55b0"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-21T12:33:54Z",
+          "updatedAt": "2024-05-21T12:33:54Z",
+          "comments": [
+            {
+              "originalPosition": 240,
+              "body": "This is still correct. CID need still to be unique per connection. However, I agree that this half sentence is probably simply unnecessary. ",
+              "createdAt": "2024-05-21T12:33:54Z",
+              "updatedAt": "2024-05-21T12:33:54Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM57SvAj",
+          "commit": {
+            "abbreviatedOid": "61b55b0"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-21T12:34:03Z",
+          "updatedAt": "2024-05-21T12:34:03Z",
+          "comments": [
+            {
+              "originalPosition": 240,
+              "body": "```suggestion\r\nOpening a new path requires the\r\n```",
+              "createdAt": "2024-05-21T12:34:03Z",
+              "updatedAt": "2024-05-21T12:34:04Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM57SwTP",
+          "commit": {
+            "abbreviatedOid": "61b55b0"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-21T12:36:31Z",
+          "updatedAt": "2024-05-21T12:36:31Z",
+          "comments": [
+            {
+              "originalPosition": 293,
+              "body": "This is correct because it doesn't say that it can be the same path ID. However, I agree it's confusing.",
+              "createdAt": "2024-05-21T12:36:31Z",
+              "updatedAt": "2024-05-21T12:36:31Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM57SwgQ",
+          "commit": {
+            "abbreviatedOid": "61b55b0"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-21T12:36:55Z",
+          "updatedAt": "2024-05-21T12:36:55Z",
+          "comments": [
+            {
+              "originalPosition": 293,
+              "body": "Not fully sure what to do here. Maybe just remove the sentence entirely?\r\n```suggestion\r\n```",
+              "createdAt": "2024-05-21T12:36:55Z",
+              "updatedAt": "2024-05-21T12:36:55Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM57SxxY",
+          "commit": {
+            "abbreviatedOid": "61b55b0"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-21T12:39:18Z",
+          "updatedAt": "2024-05-21T12:39:18Z",
+          "comments": [
+            {
+              "originalPosition": 337,
+              "body": "I agree that this seems weird if you don't have any context about the single packet number space approach. However, does it really hurt to have this sentence?\r\n\r\nI definitely planning for another editing pass, to stream-line the whole text. Maybe we can reconsider then.",
+              "createdAt": "2024-05-21T12:39:18Z",
+              "updatedAt": "2024-05-21T12:39:18Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM57Sy0v",
+          "commit": {
+            "abbreviatedOid": "61b55b0"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-21T12:40:38Z",
+          "updatedAt": "2024-05-21T12:40:38Z",
+          "comments": [
+            {
+              "originalPosition": 343,
+              "body": "True, we should at least not use normative language here as this is already normatively specified in RFC9000.\r\n```suggestion\r\nthat connection ID, but has to use a different connection ID when doing so.\r\n```",
+              "createdAt": "2024-05-21T12:40:38Z",
+              "updatedAt": "2024-05-21T12:40:38Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM57SzXl",
+          "commit": {
+            "abbreviatedOid": "61b55b0"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-21T12:41:34Z",
+          "updatedAt": "2024-05-21T12:41:34Z",
+          "comments": [
+            {
+              "originalPosition": 400,
+              "body": "Yes, if you don't send stream data flow control does not apply. However, when it applies you have to consider it. I think the sentence as is, is still more correct.",
+              "createdAt": "2024-05-21T12:41:34Z",
+              "updatedAt": "2024-05-21T12:41:34Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM57Z-8h",
+          "commit": {
+            "abbreviatedOid": "daa270d"
+          },
+          "author": "Yanmei-Liu",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-22T07:50:54Z",
+          "updatedAt": "2024-05-22T07:50:55Z",
+          "comments": [
+            {
+              "originalPosition": 293,
+              "body": "I'd suggest change the sentence into: \r\nEach endpoints _assign_ a Path Identifier for each new connection ID.",
+              "createdAt": "2024-05-22T07:50:54Z",
+              "updatedAt": "2024-05-22T07:50:55Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM57aW0a",
+          "commit": {
+            "abbreviatedOid": "daa270d"
+          },
+          "author": "marten-seemann",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-22T08:27:39Z",
+          "updatedAt": "2024-05-22T08:27:40Z",
+          "comments": [
+            {
+              "originalPosition": 293,
+              "body": "I'd argue it's the wrong way around anyway. **First** you create the path ID, **then** you issue CIDs for this path.",
+              "createdAt": "2024-05-22T08:27:40Z",
+              "updatedAt": "2024-05-22T08:27:40Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM57bJ3q",
+          "commit": {
+            "abbreviatedOid": "daa270d"
+          },
+          "author": "Yanmei-Liu",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-22T09:54:56Z",
+          "updatedAt": "2024-05-22T09:54:57Z",
+          "comments": [
+            {
+              "originalPosition": 293,
+              "body": "That's true. So it's better to change the sentence into: \r\n'_Endpoints first allocate unused Path Identifiers, then they issue Connection IDs for each Path Identifier._'",
+              "createdAt": "2024-05-22T09:54:56Z",
+              "updatedAt": "2024-05-22T09:54:57Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM57bK1L",
+          "commit": {
+            "abbreviatedOid": "61b55b0"
+          },
+          "author": "Yanmei-Liu",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-22T09:56:43Z",
+          "updatedAt": "2024-05-22T09:56:44Z",
+          "comments": [
+            {
+              "originalPosition": 294,
+              "body": "```suggestion\r\nEndpoints first allocate unused Path Identifiers, then they issue Connection IDs for each Path Identifier.\r\n```",
+              "createdAt": "2024-05-22T09:56:44Z",
+              "updatedAt": "2024-05-22T09:56:44Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM57bQEs",
+          "commit": {
+            "abbreviatedOid": "c117861"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-22T10:02:35Z",
+          "updatedAt": "2024-05-22T10:02:35Z",
+          "comments": [
+            {
+              "originalPosition": 293,
+              "body": "I don't think that is a useful sentence. I think we can just remove it. Or what do you think is missing if we remove it, @Yanmei-Liu ?",
+              "createdAt": "2024-05-22T10:02:35Z",
+              "updatedAt": "2024-05-22T10:02:36Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM57bVv1",
+          "commit": {
+            "abbreviatedOid": "1ad59f7"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-22T10:12:32Z",
+          "updatedAt": "2024-05-22T10:12:32Z",
+          "comments": [
+            {
+              "originalPosition": 45,
+              "body": "@marten-seemann would that proposal work?",
+              "createdAt": "2024-05-22T10:12:32Z",
+              "updatedAt": "2024-05-22T10:12:32Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM57cvDa",
+          "commit": {
+            "abbreviatedOid": "1ad59f7"
+          },
+          "author": "Yanmei-Liu",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-22T13:01:15Z",
+          "updatedAt": "2024-05-22T13:01:15Z",
+          "comments": [
+            {
+              "originalPosition": 293,
+              "body": "This sentence is certainly necessary, we should clarify the relationship between CID and PATH ID at the very beginning of this section.",
+              "createdAt": "2024-05-22T13:01:15Z",
+              "updatedAt": "2024-05-22T13:01:15Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM57c4E0",
+          "commit": {
+            "abbreviatedOid": "1ad59f7"
+          },
+          "author": "Yanmei-Liu",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-22T13:15:47Z",
+          "updatedAt": "2024-05-22T13:15:47Z",
+          "comments": [
+            {
+              "originalPosition": 400,
+              "body": "The original statement is more accurate.",
+              "createdAt": "2024-05-22T13:15:47Z",
+              "updatedAt": "2024-05-22T13:15:47Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM57f4nA",
+          "commit": {
+            "abbreviatedOid": "daa270d"
+          },
+          "author": "huitema",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-22T17:50:23Z",
+          "updatedAt": "2024-05-22T17:50:23Z",
+          "comments": [
+            {
+              "originalPosition": 337,
+              "body": "in any case, \"uneffected\" --> \"unaffected\". ",
+              "createdAt": "2024-05-22T17:50:23Z",
+              "updatedAt": "2024-05-22T17:50:23Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM57f5HD",
+          "commit": {
+            "abbreviatedOid": "daa270d"
+          },
+          "author": "huitema",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-22T17:51:36Z",
+          "updatedAt": "2024-05-22T17:51:36Z",
+          "comments": [
+            {
+              "originalPosition": 400,
+              "body": "I agree that the first version is better. If a frame is not subject to flow control, the flow control always allows it.",
+              "createdAt": "2024-05-22T17:51:36Z",
+              "updatedAt": "2024-05-22T17:51:36Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM57f9wW",
+          "commit": {
+            "abbreviatedOid": "61b55b0"
+          },
+          "author": "huitema",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-22T18:02:17Z",
+          "updatedAt": "2024-05-22T18:02:17Z",
+          "comments": [
+            {
+              "originalPosition": 294,
+              "body": "I think the first version is better, \"Each endpoints pre-allocate a Path Identifier for each new connection ID.\" But the real process involves:\r\n\r\n* Endpoints decide for which paths they will allocate connection identifiers, subject to both the limits imposed by \"max paths\" and the limits of local resource. \r\n* Endpoint advertise connection identifiers for these paths.\r\n* Connection identifier values must be unique for the scope of the connection, regardless of path-id.\r\n* The number of connection-id active for a given path must not exceed the active_connection_id_limit.\r\n\r\nIt should be clear that at any given time there will be paths for which no connection ID is advertised yet, because the peer did not yet have the time or resource to advertise them. This is not an error. ",
+              "createdAt": "2024-05-22T18:02:17Z",
+              "updatedAt": "2024-05-22T18:02:17Z"
             }
           ]
         }
