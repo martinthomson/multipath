@@ -2819,8 +2819,8 @@ specified by Path ID, encoded as a variable-length integer.<a href="#section-8.6
         <h3 id="name-max_paths-frames">
 <a href="#section-8.7" class="section-number selfRef">8.7. </a><a href="#name-max_paths-frames" class="section-name selfRef">MAX_PATHS frames</a>
         </h3>
-<p id="section-8.7-1">A MAX_PATHS frame (type=0x15228c0b) informs the peer of the cumulative number of paths
-it is permitted to open.<a href="#section-8.7-1" class="pilcrow">¶</a></p>
+<p id="section-8.7-1">A MAX_PATHS frame (type=0x15228c0b) informs the peer of largest Path ID that
+is permitted to use on any path.<a href="#section-8.7-1" class="pilcrow">¶</a></p>
 <p id="section-8.7-2">MAX_PATHS frames are formatted as shown in <a href="#fig-max-paths-frame-format" class="auto internal xref">Figure 11</a>.<a href="#section-8.7-2" class="pilcrow">¶</a></p>
 <span id="name-max_paths-frame-format"></span><div id="fig-max-paths-frame-format">
 <figure id="figure-11">
@@ -2840,9 +2840,9 @@ MAX_PATHS Frame {
 <span class="break"></span><dl class="dlParallel" id="section-8.7-5">
           <dt id="section-8.7-5.1">Maximum Path Identifier:</dt>
           <dd style="margin-left: 1.5em" id="section-8.7-5.2">
-            <p id="section-8.7-5.2.1">The latest Path ID that can be used for this connection.
+            <p id="section-8.7-5.2.1">The largest Path ID that can be used for this connection.
 This value cannot exceed 2^32-1, as it is not
-possible to encode Path IDs larger than 2^32-1.<a href="#section-8.7-5.2.1" class="pilcrow">¶</a></p>
+possible to encode Path IDs larger than 2^32-1 as variable integer.<a href="#section-8.7-5.2.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 </dl>
@@ -2855,7 +2855,7 @@ do not announce a larger Path ID than previously received MUST be ignored.<a hre
 <p id="section-8.7-8">Endpoints SHOULD NOT issue new connection IDs which have path identifiers larger than
 the Path ID announced in the Maximum Path Identifier field in the
 MP_MAX_PATHS frame <a href="#max-paths-frame" class="auto internal xref">Section 8.7</a>.
-If no MAX_PATHS frame was received yet, the maximum Path ID
+If no MAX_PATHS frame was received yet, the maximum Path Identifier
 correspondes to value of initial_max_paths transport parameter.<a href="#section-8.7-8" class="pilcrow">¶</a></p>
 <p id="section-8.7-9">An endpoint MUST NOT initiate a path with a Path ID larger than the Maximum Path Identifier value.
 An endpoint MUST terminate the a connection with an error of type MP_PROTOCOL_VIOLATION

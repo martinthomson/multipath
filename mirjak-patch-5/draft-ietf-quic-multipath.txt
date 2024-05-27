@@ -1457,8 +1457,8 @@ Client                                                      Server
 
 8.7.  MAX_PATHS frames
 
-   A MAX_PATHS frame (type=0x15228c0b) informs the peer of the
-   cumulative number of paths it is permitted to open.
+   A MAX_PATHS frame (type=0x15228c0b) informs the peer of largest Path
+   ID that is permitted to use on any path.
 
    MAX_PATHS frames are formatted as shown in Figure 11.
 
@@ -1471,9 +1471,10 @@ Client                                                      Server
 
    MAX_PATHS frames contain the following field:
 
-   Maximum Path Identifier:  The latest Path ID that can be used for
+   Maximum Path Identifier:  The largest Path ID that can be used for
       this connection.  This value cannot exceed 2^32-1, as it is not
-      possible to encode Path IDs larger than 2^32-1.
+      possible to encode Path IDs larger than 2^32-1 as variable
+      integer.
 
    Receipt of PATH_AVAILABLE, PATH_STANDBY, PATH_ABANDON or MP_ACK
    frames that uses a Path ID that is larger than the announced Path ID
@@ -1487,8 +1488,8 @@ Client                                                      Server
    Endpoints SHOULD NOT issue new connection IDs which have path
    identifiers larger than the Path ID announced in the Maximum Path
    Identifier field in the MP_MAX_PATHS frame Section 8.7.  If no
-   MAX_PATHS frame was received yet, the maximum Path ID correspondes to
-   value of initial_max_paths transport parameter.
+   MAX_PATHS frame was received yet, the maximum Path Identifier
+   correspondes to value of initial_max_paths transport parameter.
 
    An endpoint MUST NOT initiate a path with a Path ID larger than the
    Maximum Path Identifier value.  An endpoint MUST terminate the a
