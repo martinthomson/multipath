@@ -1514,39 +1514,39 @@ defined as follows:<a href="#section-3-1" class="pilcrow">¶</a></p>
 initial_max_paths transport parameter is included if the endpoint supports
 the multipath extension as defined in this document. This is
 a variable-length integer value specifying the maximum number of
-active concurrent paths an endpoint is willing to build.
+active concurrent paths an endpoint is willing to maintain.
 The value of the initial_max_paths parameter MUST be at least 2.
 An endpoint that receives a value less than 2 MUST close
-the connection with an error of type TRANSPORT_PARAMETER_ERROR. Setting
-this parameter is equivalent to sending a MAX_PATHS (<a href="#max-paths-frame" class="auto internal xref">Section 8.7</a>)
-of the corresponding type with the same value.<a href="#section-3-2.1.1" class="pilcrow">¶</a></p>
+the connection with an error of type TRANSPORT_PARAMETER_ERROR.<a href="#section-3-2.1.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
-<p id="section-3-3">If either of the endpoints does not advertise the initial_max_paths transport
+<p id="section-3-3">Setting initial_max_paths parameter is equivalent to sending a
+MAX_PATHS frame (<a href="#max-paths-frame" class="auto internal xref">Section 8.7</a>) with the same value.<a href="#section-3-3" class="pilcrow">¶</a></p>
+<p id="section-3-4">If either of the endpoints does not advertise the initial_max_paths transport
 parameter, then the endpoints MUST NOT use any frame or
-mechanism defined in this document.<a href="#section-3-3" class="pilcrow">¶</a></p>
-<p id="section-3-4">When advertising the initial_max_paths transport parameter, the endpoint
+mechanism defined in this document.<a href="#section-3-4" class="pilcrow">¶</a></p>
+<p id="section-3-5">When advertising the initial_max_paths transport parameter, the endpoint
 MUST use non-zero length Source and Destination Connection IDs.
 If an initial_max_paths transport
 parameter is received and the carrying packet contains a zero-length
 connection ID, the receiver MUST treat this as a connection error of type
-MP_PROTOCOL_VIOLATION and close the connection.<a href="#section-3-4" class="pilcrow">¶</a></p>
-<p id="section-3-5">The initial_max_paths parameter MUST NOT be remembered
+MP_PROTOCOL_VIOLATION and close the connection.<a href="#section-3-5" class="pilcrow">¶</a></p>
+<p id="section-3-6">The initial_max_paths parameter MUST NOT be remembered
 (<span><a href="https://rfc-editor.org/rfc/rfc9000#section-7.4.1" class="relref">Section 7.4.1</a> of [<a href="#QUIC-TRANSPORT" class="cite xref">QUIC-TRANSPORT</a>]</span>).
-New paths can only be used after handshake completion.<a href="#section-3-5" class="pilcrow">¶</a></p>
-<p id="section-3-6">This extension does not change the definition of any transport parameter
-defined in <span><a href="https://rfc-editor.org/rfc/rfc9000#section-18.2." class="relref">Section 18.2.</a> of [<a href="#QUIC-TRANSPORT" class="cite xref">QUIC-TRANSPORT</a>]</span>.<a href="#section-3-6" class="pilcrow">¶</a></p>
-<p id="section-3-7">The initial_max_paths transport parameter limits the initial maximum number of active paths
+New paths can only be used after handshake completion.<a href="#section-3-6" class="pilcrow">¶</a></p>
+<p id="section-3-7">This extension does not change the definition of any transport parameter
+defined in <span><a href="https://rfc-editor.org/rfc/rfc9000#section-18.2." class="relref">Section 18.2.</a> of [<a href="#QUIC-TRANSPORT" class="cite xref">QUIC-TRANSPORT</a>]</span>.<a href="#section-3-7" class="pilcrow">¶</a></p>
+<p id="section-3-8">The initial_max_paths transport parameter limits the initial maximum number of active paths
 that can be used during a connection.
 The active_connection_id_limit transport parameter
 <span>[<a href="#QUIC-TRANSPORT" class="cite xref">QUIC-TRANSPORT</a>]</span> limits the maximum number of active connection IDs per path when the
 initial_max_paths parameter is negotiated successfully.
 Endpoints might prefer to retain spare connection IDs so that they can
-respond to unintentional migration events (<span><a href="https://rfc-editor.org/rfc/rfc9000#section-9.5" class="relref">Section 9.5</a> of [<a href="#QUIC-TRANSPORT" class="cite xref">QUIC-TRANSPORT</a>]</span>).<a href="#section-3-7" class="pilcrow">¶</a></p>
-<p id="section-3-8">Cipher suites with a nonce shorter than 12 bytes cannot be used together with
+respond to unintentional migration events (<span><a href="https://rfc-editor.org/rfc/rfc9000#section-9.5" class="relref">Section 9.5</a> of [<a href="#QUIC-TRANSPORT" class="cite xref">QUIC-TRANSPORT</a>]</span>).<a href="#section-3-8" class="pilcrow">¶</a></p>
+<p id="section-3-9">Cipher suites with a nonce shorter than 12 bytes cannot be used together with
 the multipath extension. If such a cipher suite is selected and the use of the
 multipath extension is negotiated, endpoints MUST abort the handshake with a
-TRANSPORT_PARAMETER error.<a href="#section-3-8" class="pilcrow">¶</a></p>
+TRANSPORT_PARAMETER error.<a href="#section-3-9" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="path-management">
@@ -1612,7 +1612,7 @@ that address. After receiving packets from the
 client on a new path, if the server decides to use the new path,
 the server MUST perform path validation (<span><a href="https://rfc-editor.org/rfc/rfc9000#section-8.2" class="relref">Section 8.2</a> of [<a href="#QUIC-TRANSPORT" class="cite xref">QUIC-TRANSPORT</a>]</span>)
 unless it has previously validated that address.<a href="#section-4.1-1" class="pilcrow">¶</a></p>
-<p id="section-4.1-2">If the transport parameter "initial_max_paths" is negotiated as N,
+<p id="section-4.1-2">If the transport parameter initial_max_paths is negotiated as N,
 and the client is already actively using N paths, the limit is reached.
 If the client wants to start a new path, it has to retire one of
 the established paths.<a href="#section-4.1-2" class="pilcrow">¶</a></p>
