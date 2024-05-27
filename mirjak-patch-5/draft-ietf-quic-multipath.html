@@ -2856,7 +2856,7 @@ do not announce a larger Path ID than previously received MUST be ignored.<a hre
 the Path ID announced in the Maximum Path Identifier field in the
 MP_MAX_PATHS frame <a href="#max-paths-frame" class="auto internal xref">Section 8.7</a>.
 If no MAX_PATHS frame was received yet, the maximum Path Identifier
-correspondes to value of initial_max_paths transport parameter.<a href="#section-8.7-8" class="pilcrow">¶</a></p>
+corresponds to the value of initial_max_paths transport parameter.<a href="#section-8.7-8" class="pilcrow">¶</a></p>
 <p id="section-8.7-9">An endpoint MUST NOT initiate a path with a Path ID larger than the Maximum Path Identifier value.
 An endpoint MUST terminate the a connection with an error of type MP_PROTOCOL_VIOLATION
 if a peer opens a path with a larger Path ID than permitted.<a href="#section-8.7-9" class="pilcrow">¶</a></p>

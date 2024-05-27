@@ -1489,7 +1489,7 @@ Client                                                      Server
    identifiers larger than the Path ID announced in the Maximum Path
    Identifier field in the MP_MAX_PATHS frame Section 8.7.  If no
    MAX_PATHS frame was received yet, the maximum Path Identifier
-   correspondes to value of initial_max_paths transport parameter.
+   corresponds to the value of initial_max_paths transport parameter.
 
    An endpoint MUST NOT initiate a path with a Path ID larger than the
    Maximum Path Identifier value.  An endpoint MUST terminate the a
