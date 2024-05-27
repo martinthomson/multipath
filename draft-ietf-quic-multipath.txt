@@ -5,7 +5,7 @@
 QUIC Working Group                                  刘彦梅 (Y. Liu), Ed.
 Internet-Draft                                              Alibaba Inc.
 Intended status: Standards Track                          马云飞 (Y. Ma)
-Expires: 25 November 2024                         Uber Technologies Inc.
+Expires: 28 November 2024                         Uber Technologies Inc.
                                                       Q. De Coninck, Ed.
                                               University of Mons (UMONS)
                                                           O. Bonaventure
@@ -14,7 +14,7 @@ Expires: 25 November 2024                         Uber Technologies Inc.
                                                     Private Octopus Inc.
                                                       M. Kuehlewind, Ed.
                                                                 Ericsson
-                                                             24 May 2024
+                                                             27 May 2024
 
 
                       Multipath Extension for QUIC
@@ -52,7 +52,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 25 November 2024.
+   This Internet-Draft will expire on 28 November 2024.
 
 Copyright Notice
 
@@ -531,8 +531,8 @@ Table of Contents
    The PATH_ABANDON frame is retires the associated Path Identifier.
    When an endpoint receives a PATH_ABANDON frame, it SHOULD NOT use the
    associated Path Identifier in future packets, except in ACK_MP frames
-   for inflight packets and in MP_RETIRE_CONNECTION_ID frames for CID
-   retirement.
+   for inflight packets and in MP_RETIRE_CONNECTION_ID frames for
+   connection ID retirement.
 
    PATH_ABANDON frames can be sent on any path, not only the path that
    is intended to be closed.  Thus, a path can be abandoned even if
@@ -540,9 +540,9 @@ Table of Contents
    is still an active path, it is RECOMMENDED to send a PATH_ABANDON
    frame after an idle time on another path.
 
-   When a path is abandoned, all CIDs allocated by both of the endpoints
-   for the specified Path ID need to be retired.  When sending or
-   receiving a PATH_ABANDON frame, endpoints SHOULD wait for at least
+   When a path is abandoned, all connection IDs allocated by both of the
+   endpoints for the specified Path ID need to be retired.  When sending
+   or receiving a PATH_ABANDON frame, endpoints SHOULD wait for at least
    three times the current Probe Timeout (PTO) interval after the last
    packet was sent on the path, as defined in Section 6.2 of
    [QUIC-RECOVERY], before sending MP_RETIRE_CONNECTION_ID frames.  This
@@ -627,13 +627,13 @@ Table of Contents
    anymore, the endpoint cannot send on this path.  This can happen if,
    e.g., the connection ID issuer requests retirement of a connection ID
    using the Retire Prior To field in the NEW_CONNECTION_ID frame but
-   does provide sufficient new CIDs.
+   does provide sufficient new connection IDs.
 
    Note that even if a peer cannot send on a path anymore because it
    does not have a valid connection ID to use, it can still acknowledge
    packets received on the path, by sending ACK_MP frames on another
-   path, if available.  Also note that, as there is no valid CID
-   associated with the path, both endpoints can still send multipath
+   path, if available.  Also note that, as there is no valid connection
+   ID associated with the path, both endpoints can still send multipath
    control frames that contain the Path Identifier on available paths,
    such as PATH_ABANDON, PATH_STANDBY or PATH_AVAILABLE.
 
@@ -779,8 +779,8 @@ Table of Contents
    space starts at packet number 0.  When following the packet number
    encoding algorithm described in Appendix A.2 of [QUIC-TRANSPORT], the
    largest packet number (largest_acked) that has been acknowledged by
-   the peer in this new CID's packet number space is initially set to
-   "None".
+   the peer in this new connection ID's packet number space is initially
+   set to "None".
 
 5.1.  Sending Acknowledgements
 
@@ -914,11 +914,11 @@ Table of Contents
    client chooses the connection ID S2 as the Destination Connection ID
    in the new path.
 
-   If the client has used all the allocated CID, it is supposed to
-   retire those that are not used anymore, and the server is supposed to
-   provide replacements, as specified in [QUIC-TRANSPORT].  Usually, it
-   is desired to provide one more connection ID as currently in use, to
-   allow for new paths or migration.
+   If the client has used all the allocated connection IDs, it is
+   supposed to retire those that are not used anymore, and the server is
+   supposed to provide replacements, as specified in [QUIC-TRANSPORT].
+   Usually, it is desired to provide one more connection ID as currently
+   in use, to allow for new paths or migration.
 
 6.2.  Path Closure
 
@@ -999,17 +999,17 @@ Client                                                      Server
    The path is defined by the 4-tuple through which packets are received
    and sent.  Packets sent on the path will include the Destination
    Connection ID currently used for that path, selected from the list of
-   CID provided by the peer.  Packets received on the path carry a
-   Destination CID selected by the peer from the list provided to that
-   peer.
+   connection IDs provided by the peer.  Packets received on the path
+   carry a Destination CID selected by the peer from the list provided
+   to that peer.
 
-   The relation between packet number spaces and paths is fixed.  CIDs
-   are pre-allocated for each Path Identifier.  Once CIDs are issued,
-   they are assigned to one specific Path Identifier.  A node may decide
-   to rotate the Destination CID it uses, a NAT may decide to change the
-   4-tuple over which packets from that path will be received.  The
-   packet number space does not change when CID rotation happens within
-   a given Path ID.
+   The relation between packet number spaces and paths is fixed.
+   Connection IDs are pre-allocated for each path identifier.  Once
+   connection IDs are issued, they are assigned to one specific path
+   identifier.  A node may decide to rotate the Destination connection
+   ID it uses, a NAT may decide to change the 4-tuple over which packets
+   from that path will be received.  The packet number space does not
+   change when connection ID rotation happens within a given Path ID.
 
    Data associated with the transmission and reception on a given path
    can be associated to either the "path state", or to the state of
@@ -1017,18 +1017,20 @@ Client                                                      Server
 
    *  RTT measurements and congestion state are logically associated
       with the 4-tuple.  They will remain unchanged if data starts being
-      received or sent through the same 4-tuple using new CIDs.
+      received or sent through the same 4-tuple using new connection
+      IDs.
 
    *  Implementations of loss recovery typically maintain lists of
       packets sent and not yet acknowledged.  Such information, along
       with the value of the next PN to use for sending, is logically
       associated with the "Sender Number Space", which remain unchanged
-      when CID rotation happens.
+      when connection ID rotation happens.
 
    *  Sending of acknowledgement requires keeping track of the PN of
       received packets and of acknowledgements previously sent.  Such
       information is logically associated with the "Receiver Number
-      Space", which remain unchanged when CID rotation happens.
+      Space", which remain unchanged when connection ID rotation
+      happens.
 
 7.2.  Congestion Control
 
