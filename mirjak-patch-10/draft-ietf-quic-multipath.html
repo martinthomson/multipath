@@ -2668,13 +2668,13 @@ field is added:<a href="#section-8.5-4" class="pilcrow">¶</a></p>
 <span class="break"></span><dl class="dlParallel" id="section-8.5-5">
           <dt id="section-8.5-5.1">Path Identifier:</dt>
           <dd style="margin-left: 1.5em" id="section-8.5-5.2">
-            <p id="section-8.5-5.2.1">The Path ID assocaited with the connection ID. This
+            <p id="section-8.5-5.2.1">The Path ID associated with the connection ID. This
 means the provided connection ID can only be used on the corresponding path.<a href="#section-8.5-5.2.1" class="pilcrow">¶</a></p>
 </dd>
         <dd class="break"></dd>
 </dl>
 <p id="section-8.5-6">Note that, other than for the NEW_CONNECTION_ID frame of <span><a href="https://rfc-editor.org/rfc/rfc9000#section-19.15" class="relref">Section 19.15</a> of [<a href="#QUIC-TRANSPORT" class="cite xref">QUIC-TRANSPORT</a>]</span>,
-the sequence number is set dependently for each path.
+the sequence number applies on a per-path context.
 This means different connection IDs on different paths may have the same
 sequence number value. Respectively, the Retire Prior To field indicates which connection IDs
 should be retired for the path with the Path ID in the Path Identifier field.<a href="#section-8.5-6" class="pilcrow">¶</a></p>
