@@ -790,7 +790,7 @@ Table of Contents
    Path ID 0.
 
    After the handshake concluded if negotiation of multipath support
-   succeeded, endpoints SHOULD use ACK_MP frames instead of ACK frames.
+   succeeded, endpoints SHOULD use ACK_MP frames instead of ACK frames,
    also for acknowledging so far unacknowledged 0-RTT packets, using
    Path ID 0.
 
