@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2024-05-26T00:47:04.585442+00:00",
+  "timestamp": "2024-05-28T00:43:20.721484+00:00",
   "repo": "quicwg/multipath",
   "labels": [
     {
@@ -6987,7 +6987,7 @@
       ],
       "body": "Currently, MP_PROTOCOL_VIOLATION is used is for a too high CID seq num in the frame as well as the handshake error case if multipath is negotiated but no CID is present.\r\n\r\nHowever, we could also decided to define more specific error codes for one or both cases. ",
       "createdAt": "2023-07-05T16:19:15Z",
-      "updatedAt": "2023-11-03T16:05:50Z",
+      "updatedAt": "2024-05-27T21:33:21Z",
       "closedAt": null,
       "comments": [
         {
@@ -7066,6 +7066,13 @@
           "body": "My take on the design philosophy of error codes in QUIC was a) an enpoint can always pick the most generic error code b) picking a more-specific error code is a kindness/affordance to the peer. An error code might help the receiver determine more quickly where a problem lies - but quite often these bugs are rare and easy to determine a root cause as long as awareness of _any_ issue is raised (e.g. I got a CONNECTION_CLOSE when hitting a server, and here is the repro URL)\r\n\r\nThis stuff is a bit subjective. \r\n\r\nI see 2 cases in the draft where MP_PROTOCOL_VIOLATION is used\r\n\r\n1) If an enable_multipath transport parameter is received and the carrying packet contains a zero length connection ID, the receiver MUST treat this as a connection error of type MP_PROTOCOL_VIOLATION and close the connection.\r\n\r\nThis is super easy to spot - its a critical error exceedingly early in a connection and its clear why the sender triggered it\r\n\r\n2) All multipath-specific frames relate to a Destination Connection ID sequence number. If an endpoint receives a Destination Connection ID sequence number greater than any previously sent to the peer, it MUST treat this as a connection error of type MP_PROTOCOL_VIOLATION.\r\n\r\nThis one doesn't seem as easy as the first. However, the endpoint that receives the bogus frame can just indicate the frame type in the CONNECTION_CLOSE. It might also say something in the reason phrase.\r\n\r\n\r\nOn balance, it feels to me that dropping MP_PROTOCOL_VIOLATION would not make anyone's lives too hard, while saving the overhead of defining and implementing the error code.",
           "createdAt": "2023-11-03T16:04:54Z",
           "updatedAt": "2023-11-03T16:05:49Z"
+        },
+        {
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "body": "Having reviewed the document now again, I also think we should drop MP_PROTOCOL_VIOLATION and use PROTOCOL_VIOLATION instead.\r\n\r\nIf we really want a more specific error code for the zero-cid case, I think we should define an error code for that specifically. Additionally, we could also define a path_id_limit error (now with the explicit path id) if people think that would be useful...?",
+          "createdAt": "2024-05-27T21:33:20Z",
+          "updatedAt": "2024-05-27T21:33:20Z"
         }
       ]
     },
@@ -8463,7 +8470,7 @@
         },
         {
           "author": "MikeBishop",
-          "authorAssociation": "NONE",
+          "authorAssociation": "CONTRIBUTOR",
           "body": "32 bits is an odd boundary in this case. It's being sent in a varint, which means its size boundaries are at 62 bits, 30 bits, 14 bits, and 6 bits.  I understand the rationale for the 2^32 cap due to the nonce, but that means we're spilling over into eight-byte representations without taking advantage of the eight-byte space.\r\n\r\nI would suggest either:\r\n- Cap the number of path IDs per connection to 2^30 -1 and never use the 62-bit representation\r\n- Allow path IDs to go up to 2^62 - 1, but keep the requirement that key rotation must happen at most every 2^32-1 paths.\r\n\r\nA larger path ID can definitely be sent in frames, so we should be sure there are normative requirements around it. (Several may be covered by existing requirements about larger Path IDs than have been permitted by the peer, however.)",
           "createdAt": "2024-05-25T02:30:09Z",
           "updatedAt": "2024-05-25T02:30:09Z"
@@ -8710,7 +8717,7 @@
         },
         {
           "author": "MikeBishop",
-          "authorAssociation": "NONE",
+          "authorAssociation": "CONTRIBUTOR",
           "body": "I had a similar question reading the draft, and while @huitema's suggestion here simplifies dealing with CID retirement, I'm not certain it fixes the issue with ABANDON in general. I agree that abandoning a path means two things:\r\n\r\n- I will no longer send on this path, and all CIDs you issued for it have been retired\r\n- I will shortly stop accepting packets on this path, so stop sending them\r\n\r\nThe sender of ABANDON will not process any Stateless Resets that might arrive, since it already considers the CIDs and tokens from that path to be invalid.  However, there still needs to be that loop closure before it can safely start sending Stateless Resets in response to straggler packets, and probably still a draining period.",
           "createdAt": "2024-05-25T03:12:59Z",
           "updatedAt": "2024-05-25T03:12:59Z"
@@ -9076,7 +9083,7 @@
       ],
       "body": "Record from comments:\r\n\r\n[marten-seemann](https://github.com/marten-seemann) [4 days ago](https://github.com/quicwg/multipath/pull/292#discussion_r1527500625)\r\n> Probably better: initial_max_path_id. This would mirror the meaning of the frame as suggested in https://github.com/quicwg/multipath/pull/292/files#r1527500161.\r\n\r\n\r\n[michael-eriksson](https://github.com/michael-eriksson) [4 days ago](https://github.com/quicwg/multipath/pull/292#discussion_r1527532226)\r\n> I think it should remain initial_max_paths to be symmetric with initial_max_streams_*.\r\n\r\n> The explanation can be copied from [RFC 9000](https://www.rfc-editor.org/rfc/rfc9000.html#section-18.2-4.22.1):\r\n\r\n>> Setting this parameter is equivalent to sending a MAX_PATHS of the corresponding type with the same value.\r\n\r\n\r\n[marten-seemann](https://github.com/marten-seemann) [4 days ago](https://github.com/quicwg/multipath/pull/292#discussion_r1527658157)\r\n> My 2c: There's only so much value you get from consistency with RFC 9000. This has created a fair amount of confusion in the review of this PR, and it seems like calling it initial_max_path_id (and the corresponding renaming of the frame), would make it 100% clear what is meant, without the need for long explanations.\r\n\r\n[michael-eriksson](https://github.com/michael-eriksson) [3 days ago](https://github.com/quicwg/multipath/pull/292#discussion_r1527988506)\r\n> Well, then I think that the frame type should be MAX_PATH_ID to further reduce the confusion and increase the multipath specification consistency.\r\n",
       "createdAt": "2024-03-21T13:58:47Z",
-      "updatedAt": "2024-05-14T13:31:27Z",
+      "updatedAt": "2024-05-27T15:00:01Z",
       "closedAt": null,
       "comments": [
         {
@@ -9085,6 +9092,27 @@
           "body": "the current draft (-07) uses MAX_PATH to announce the max number of paths and not the largest path ID that can be used. So the name matches the meaning, I would say.\r\n\r\nIs this issue to discuss to use the max path ID instead (or was this just about aligning the naming)? ",
           "createdAt": "2024-05-14T13:31:17Z",
           "updatedAt": "2024-05-14T13:31:17Z"
+        },
+        {
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "body": "This is an entire mess right now in the draft:\r\n\r\ninitial_max_path is defined like this (as the max number of path):\r\n\r\n```\r\ninitial_max_path: initial_max_paths (current version uses 0x0f739bbc1b666d07): the initial_max_paths transport parameter is included if the endpoint supports the multipath extension as defined in this document. This is a variable-length integer value specifying the maximum number of active concurrent paths an endpoint is willing to build. The value of the initial_max_paths parameter MUST be at least 2. An endpoint that receives a value less than 2 MUST close the connection with an error of type TRANSPORT_PARAMETER_ERROR. Setting this parameter is equivalent to sending a MAX_PATHS ([Section 8.7](https://quicwg.org/multipath/draft-ietf-quic-multipath.html#max-paths-frame)) of the corresponding type with the same value.[\u00b6](https://quicwg.org/multipath/draft-ietf-quic-multipath.html#section-3-2.1.1)\r\n```\r\n\r\nMAX_PATH is defined like this however:\r\n\r\n```\r\nMAX_PATHS frames are formatted as shown in [Figure 11](https://quicwg.org/multipath/draft-ietf-quic-multipath.html#fig-max-paths-frame-format).[\u00b6](https://quicwg.org/multipath/draft-ietf-quic-multipath.html#section-8.7-2)\r\n\r\nMAX_PATHS Frame {\r\n  Type (i) = 0x15228c0b,\r\n  Maximum Paths (i),\r\n}\r\n[Figure 11](https://quicwg.org/multipath/draft-ietf-quic-multipath.html#figure-11): [MAX_PATHS Frame Format](https://quicwg.org/multipath/draft-ietf-quic-multipath.html#name-max_paths-frame-format)\r\nMAX_PATHS frames contain the following field:[\u00b6](https://quicwg.org/multipath/draft-ietf-quic-multipath.html#section-8.7-4)\r\n\r\nMaximum Path Identifier:\r\nA count of the cumulative number of path that can be opened over the lifetime of the connection. This value cannot exceed 2^32-1, as it is not possible to encode Path IDs larger than 2^32-1. Receipt of a frame that permits opening of a path with Path Identifier larger than this limit MUST be treated as a connection error of type FRAME_ENCODING_ERROR.[\u00b6](https://quicwg.org/multipath/draft-ietf-quic-multipath.html#section-8.7-5.2.1)\r\n```",
+          "createdAt": "2024-05-27T12:50:10Z",
+          "updatedAt": "2024-05-27T12:50:10Z"
+        },
+        {
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "body": "I created PR #354 to fix the definition of the MAX_PATHS frame now actually indicating the largest Path ID that can be used. \r\n\r\nHowever, initial_max_paths is still defined as the max number of paths (and also thereby also indicate the max path ID at the beginning when no MAX_PATHS frame was received yet). Do we want to change this?\r\n\r\n\r\n",
+          "createdAt": "2024-05-27T13:18:54Z",
+          "updatedAt": "2024-05-27T13:18:54Z"
+        },
+        {
+          "author": "huitema",
+          "authorAssociation": "CONTRIBUTOR",
+          "body": "Yes we do. the \"initial_max_path\" frame shall be the same as \"the first MAX PATH frame received on the connection\".",
+          "createdAt": "2024-05-27T15:00:00Z",
+          "updatedAt": "2024-05-27T15:00:00Z"
         }
       ]
     },
@@ -9265,7 +9293,7 @@
         },
         {
           "author": "MikeBishop",
-          "authorAssociation": "NONE",
+          "authorAssociation": "CONTRIBUTOR",
           "body": "This is reminiscent of the discussion about whether bidi/uni streams should be split by frame type or by stream ID. Stream ID won out, and I suspect we should follow QUIC precedent here.",
           "createdAt": "2024-05-25T02:22:28Z",
           "updatedAt": "2024-05-25T02:22:28Z"
@@ -9286,14 +9314,14 @@
         "needs-discussion",
         "explicit path ID"
       ],
-      "body": "With PR  #292 we changed the active_connection_id_limit to be now per path. Is that really necessary or the correct thing to do?\r\n\r\nIf we can keep active_connection_id_limit to limit the total numbers of CID an endpoint is willing to maintain (because maintaining with or without a path ID associated to the CID is not really a difference), each endpoint can still control the maximum number of paths but announcing CIDs respectively.",
+      "body": "With PR  #292 we changed the active_connection_id_limit to be now per path. Is that really necessary or the correct thing to do?\r\n\r\nIf we can keep active_connection_id_limit to limit the total numbers of CID an endpoint is willing to maintain (because maintaining with or without a path ID associated to the CID is not really a difference), each endpoint can still control the maximum number of paths by announcing CIDs respectively.",
       "createdAt": "2024-05-14T10:27:30Z",
-      "updatedAt": "2024-05-25T02:18:17Z",
+      "updatedAt": "2024-05-27T23:26:58Z",
       "closedAt": null,
       "comments": [
         {
           "author": "MikeBishop",
-          "authorAssociation": "NONE",
+          "authorAssociation": "CONTRIBUTOR",
           "body": "I would be inclined to mint a separate transport parameter here. The number of CIDs an endpoint is committing to manage is `active_connection_id_limit` if MP is not negotiated, but `active_connection_id_limit` times number of paths if MP is negotiated. An endpoint might want to select comparable total numbers for each case, but can't know in advance whether the peer will negotiate multipath or not.",
           "createdAt": "2024-05-25T02:18:16Z",
           "updatedAt": "2024-05-25T02:18:16Z"
@@ -9483,12 +9511,15 @@
       "url": "https://github.com/quicwg/multipath/issues/342",
       "state": "OPEN",
       "author": "MikeBishop",
-      "authorAssociation": "NONE",
+      "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
-      "labels": [],
+      "labels": [
+        "design",
+        "explicit path ID"
+      ],
       "body": "In #328, we're discussing how much the path ID allocation should resemble stream ID allocation.  Along the same lines, I think the suggestion in 4.3.3 to overload MAX_PATHS to indicate that the sender would like to open more paths but is out of path IDs is not wonderful. \r\n\r\n> When endpoint finds it has not enough available unused Path Identifiers, it SHOULD send a MP_MAX_PATHS frame to inform the peer that it could use larger active Path Identifiers.\r\n\r\nFollowing the stream ID design, there should be a MP_MAX_PATHS_BLOCKED frame for that purpose instead.",
       "createdAt": "2024-05-25T02:24:28Z",
-      "updatedAt": "2024-05-25T02:24:28Z",
+      "updatedAt": "2024-05-27T14:55:04Z",
       "closedAt": null,
       "comments": []
     },
@@ -9499,12 +9530,14 @@
       "url": "https://github.com/quicwg/multipath/issues/343",
       "state": "OPEN",
       "author": "MikeBishop",
-      "authorAssociation": "NONE",
+      "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
-      "labels": [],
+      "labels": [
+        "design"
+      ],
       "body": "The draft currently says, from #256, that:\r\n\r\n> They can also start using multiple paths, unless both server preferred addresses and a disable_active_migration transport parameter were provided by the server, in which case a client is forbidden to establish new paths until \"after a client has acted on a preferred_address transport parameter\" ([Section 18.2.](https://rfc-editor.org/rfc/rfc9000#section-18.2.) of [[QUIC-TRANSPORT](https://quicwg.org/multipath/draft-ietf-quic-multipath.html#QUIC-TRANSPORT)]).\r\n\r\nThis is nearly correct. The `disable_active_migration` transport parameter indicates that \"an endpoint ... MUST NOT use a new local address when sending to the address that the peer used during the handshake.\" This does not prohibit the client from connecting to any other server address that it might know about.\r\n\r\nThe targeted scenario for the RFC 9000 text is an Anycast IP, where attempting to connect from a different source may land on a different destination instance. The migration to the SPA will allow a direct connection to the server that performed the handshake regardless of source address.\r\n\r\nNotably, if the migration fails, the current text prohibits the client from *ever* establishing any other paths, which is probably not what we want.\r\n\r\nI would suggest that we clarify that this prohibition applies only to the handshake address, and that establishment of additional paths to other addresses (potentially including the SPA) is valid immediately.",
       "createdAt": "2024-05-25T02:45:20Z",
-      "updatedAt": "2024-05-25T02:45:20Z",
+      "updatedAt": "2024-05-27T12:41:13Z",
       "closedAt": null,
       "comments": []
     },
@@ -9515,17 +9548,20 @@
       "url": "https://github.com/quicwg/multipath/issues/344",
       "state": "OPEN",
       "author": "MikeBishop",
-      "authorAssociation": "NONE",
+      "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
-      "labels": [],
+      "labels": [
+        "design",
+        "explicit path ID"
+      ],
       "body": "The draft currently says:\r\n\r\n> If the transport parameter \"initial_max_paths\" is negotiated as N, and the client is already actively using N paths, the limit is reached. If the client wants to start a new path, it has to retire one of the established paths.\r\n\r\nRetiring a path does not immediately allow the endpoint to open a new one or guarantee that the peer will issue a new path ID for its use. I would either remove the client instructions or address it alongside #342 with a suggestion to send whatever signal is defined there.",
       "createdAt": "2024-05-25T02:51:40Z",
-      "updatedAt": "2024-05-25T05:21:30Z",
+      "updatedAt": "2024-05-27T14:55:14Z",
       "closedAt": null,
       "comments": [
         {
           "author": "MikeBishop",
-          "authorAssociation": "NONE",
+          "authorAssociation": "CONTRIBUTOR",
           "body": "Actually, per @mirjak's comment in #324, I might have misunderstood how MAX_PATHS is interpreted. In that case, I strongly support sending the maximum Path ID which a peer is willing to receive, lest we have another Rapid Reset design on our hands.",
           "createdAt": "2024-05-25T04:15:11Z",
           "updatedAt": "2024-05-25T04:15:11Z"
@@ -9536,6 +9572,13 @@
           "body": "The design is clearly \"maximum path ID\", even if the name \"MAX_PATHS\" brings some confusion. We debated for some time, and we decided to keep the MAX_PATHS terminology, and treat it pretty much like MAX_STREAMS. Just like RFC9000 says \"Only streams with a stream ID less than (max_streams * 4 + first_stream_id_of_type) can be opened\", we have \"Only connection ID with a path ID less than max_paths can be sent in MP_NEW_CONNECTION_ID frames\". Or, if we go for the even/odd split, \"Only connection ID with a path ID less than (max_paths * 2 + first_path_id_of_type) can be sent in MP_NEW_CONNECTION_ID frames\".\r\n\r\nA difference with streams is that both endpoints need to send connection ID for every path_id, so for each endpoint \"max_paths\" is \"the max_paths value advertised by the peer\".",
           "createdAt": "2024-05-25T05:19:18Z",
           "updatedAt": "2024-05-25T05:21:30Z"
+        },
+        {
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "body": "@huitema actually initial_max_path is defined as a maximum count and MAX_PATH is defined inconsistently. We really need to fix that but let's discuss that in issue #324 ",
+          "createdAt": "2024-05-27T12:51:33Z",
+          "updatedAt": "2024-05-27T12:51:33Z"
         }
       ]
     },
@@ -9544,32 +9587,59 @@
       "id": "I_kwDOGNtpaM6KFTNT",
       "title": "Path Blackhole",
       "url": "https://github.com/quicwg/multipath/issues/345",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "MikeBishop",
-      "authorAssociation": "NONE",
+      "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
-      "labels": [],
+      "labels": [
+        "editorial"
+      ],
       "body": "This term appears in Figure 1 but does not appear anywhere in the text of the document. What is it doing there?",
       "createdAt": "2024-05-25T03:21:17Z",
-      "updatedAt": "2024-05-25T03:21:17Z",
-      "closedAt": null,
-      "comments": []
+      "updatedAt": "2024-05-27T12:34:56Z",
+      "closedAt": "2024-05-27T12:34:56Z",
+      "comments": [
+        {
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "body": "Thanks! I replaced it with \"Idle timeout\" in PR #353.",
+          "createdAt": "2024-05-27T12:34:56Z",
+          "updatedAt": "2024-05-27T12:34:56Z"
+        }
+      ]
     },
     {
       "number": 346,
       "id": "I_kwDOGNtpaM6KFWY8",
       "title": "Capitalization and usage consistency",
       "url": "https://github.com/quicwg/multipath/issues/346",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "MikeBishop",
-      "authorAssociation": "NONE",
+      "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
-      "labels": [],
+      "labels": [
+        "editorial"
+      ],
       "body": "Purely editorial nit; maybe do a global pass right before submission, but consider when updating existing text.\r\n\r\nIn RFC 9000 et al., there is a subtle distinction between capitalized and uncapitalized terms.  The \"connection ID\" is the value, while \"Connection ID\" is the field in a packet or frame.  The term \"CID\" never appears; DCID and SCID abbreviations are only used in examples.  This draft does not appear to follow that distinction or have a similar distinction between the \"path ID\" and \"Path ID\" fields.\r\n\r\n(The draft is also inconsistent between \"ID\" and \"identifier\", though RFC 9000 could have been improved there as well.)",
       "createdAt": "2024-05-25T03:41:08Z",
-      "updatedAt": "2024-05-25T03:41:23Z",
-      "closedAt": null,
-      "comments": []
+      "updatedAt": "2024-05-27T13:59:08Z",
+      "closedAt": "2024-05-27T12:31:22Z",
+      "comments": [
+        {
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "body": "Thanks! This was already mainly addressed in #334 and I now also removed CID in #352. ",
+          "createdAt": "2024-05-27T12:31:22Z",
+          "updatedAt": "2024-05-27T12:31:22Z"
+        },
+        {
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "body": "Path ID/path identifier use still had issues. Also merged #356 now!",
+          "createdAt": "2024-05-27T13:59:07Z",
+          "updatedAt": "2024-05-27T13:59:07Z"
+        }
+      ]
     },
     {
       "number": 347,
@@ -9578,30 +9648,50 @@
       "url": "https://github.com/quicwg/multipath/issues/347",
       "state": "OPEN",
       "author": "MikeBishop",
-      "authorAssociation": "NONE",
+      "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
-      "labels": [],
+      "labels": [
+        "no-action-needed"
+      ],
       "body": "The draft does not modify RFC 9000's definition that \"PATH_CHALLENGE, PATH_RESPONSE, NEW_CONNECTION_ID, and PADDING frames are 'probing frames', and all other frames are 'non-probing frames'.\" However, it does say that \"A PATH_(AVAILABLE|STANDBY) frame MAY be bundled with ... a PATH_RESPONSE frame in order to indicate the preferred path usage before or during path initiation.\"\r\n\r\nThis suggests that these frames might be treated as probing frames. Either way, the draft should explicitly state that they are or are not.\r\n\r\n(Alternatively, the concept of probing packets/frames might be outmoded in a multipath world. This concept seems largely unused in this document except in Section 4.3.5.)",
       "createdAt": "2024-05-25T03:48:15Z",
-      "updatedAt": "2024-05-25T03:48:15Z",
+      "updatedAt": "2024-05-27T12:25:41Z",
       "closedAt": null,
-      "comments": []
+      "comments": [
+        {
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "body": "We discussed this already and decided that we don't need the concept of probing frames. This is why the draft has the following text in section 4.1:\r\n\r\n```\r\nSection 9.1 of [[QUIC-TRANSPORT] introduces the concept of \"probing\" and \"non-probing\" frames. \r\nWhen the multipath extension is negotiated, the reception of \"non-probing\" packet on a new path \r\nneeds to be considered as a path initiation attempt that does not impact the path status of any\r\nexisting path. Therefore, any frame can be sent on a new path at any time as long as \r\nthe anti-amplification limits (Section 21.1.1.1 of [[QUIC-TRANSPORT]) and\r\nthe congestion control limits for this path are respected.\r\n```\r\n\r\nCan we close this issue or is there anything else needed?",
+          "createdAt": "2024-05-27T12:23:28Z",
+          "updatedAt": "2024-05-27T12:25:24Z"
+        }
+      ]
     },
     {
       "number": 348,
       "id": "I_kwDOGNtpaM6KFYi8",
       "title": "Is the Path Status number space per-path or global?",
       "url": "https://github.com/quicwg/multipath/issues/348",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "MikeBishop",
-      "authorAssociation": "NONE",
+      "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
-      "labels": [],
+      "labels": [
+        "duplicate"
+      ],
       "body": "It appears that the Path Status sequence number is always interpreted in the context of a path ID. However, I did not find an explicit statement of whether the same sequence number for different paths is permitted or prohibited.",
       "createdAt": "2024-05-25T03:51:25Z",
-      "updatedAt": "2024-05-25T03:51:25Z",
-      "closedAt": null,
-      "comments": []
+      "updatedAt": "2024-05-27T12:20:55Z",
+      "closedAt": "2024-05-27T12:20:55Z",
+      "comments": [
+        {
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "body": "currently it's one sequence number space for the whole connection. So, no the same seq number is not permitted. However, we the explicit oath id approach we could reconsider that. In any case we need to clarify it. However, I will close this now as this is a duplicate of issue #312 ",
+          "createdAt": "2024-05-27T12:20:55Z",
+          "updatedAt": "2024-05-27T12:20:55Z"
+        }
+      ]
     },
     {
       "number": 349,
@@ -9610,12 +9700,56 @@
       "url": "https://github.com/quicwg/multipath/issues/349",
       "state": "OPEN",
       "author": "MikeBishop",
-      "authorAssociation": "NONE",
+      "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
-      "labels": [],
+      "labels": [
+        "editorial"
+      ],
       "body": "(Editorial nit.)\r\n\r\nIf it's pronounced \"em pee\", then references should be \"an MP_whatever frame\".  If it's pronounced \"multipath\", references should be \"a MP_whatever frame\".\r\n\r\nThe draft currently uses \"a\" throughout, which may be the answer, but I wanted to check.",
       "createdAt": "2024-05-25T03:56:05Z",
-      "updatedAt": "2024-05-25T03:56:05Z",
+      "updatedAt": "2024-05-27T20:43:20Z",
+      "closedAt": null,
+      "comments": [
+        {
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "body": "Thanks for checking. No idea... anybody has any glue/preferences?\r\n\r\nI think there is actually a more generally question about naming of these frames; I will open a separate issue for that!",
+          "createdAt": "2024-05-27T20:43:19Z",
+          "updatedAt": "2024-05-27T20:43:19Z"
+        }
+      ]
+    },
+    {
+      "number": 359,
+      "id": "I_kwDOGNtpaM6KRMf3",
+      "title": "Naming consistency of frames",
+      "url": "https://github.com/quicwg/multipath/issues/359",
+      "state": "OPEN",
+      "author": "mirjak",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [
+        "editorial"
+      ],
+      "body": "We should maybe review the names of the frames, e.g.:\r\n\r\n1) Should we rename ACK_MP to MP_ACK? Or PATH_ACK?\r\n\r\n2) Is it MP_NEW_CONNECTION_ID or maybe rather PATH_NEW_CONNECTION_ID or NEW_PATH_CONNECTION_ID or go shorter to PATH_NEW_CID or something?\r\n\r\n3) Depending on the final definition is could be MAX_PATHS or MAX_PATH_ID",
+      "createdAt": "2024-05-27T20:49:09Z",
+      "updatedAt": "2024-05-27T20:49:14Z",
+      "closedAt": null,
+      "comments": []
+    },
+    {
+      "number": 360,
+      "id": "I_kwDOGNtpaM6KRPuI",
+      "title": "Controlling Path and Path-ID resource",
+      "url": "https://github.com/quicwg/multipath/issues/360",
+      "state": "OPEN",
+      "author": "huitema",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [],
+      "body": "We should say something about controlling the use of multipath resource. Something like:\r\n\r\nImplementing the multipath extension requires expanding the use of two kind of resource: connection identifiers, which must be provided to the peer before being used in a path; and active paths contexts, which include data structures for managing the path and the associated packet number space.\r\n\r\nThe number of connection identifiers is limited by the Max Path value and by the Maximum Number of Active Connection IDs. When endpoints advertise a Max Path value, they authorize the peer to send the authorized maximum number of active connection IDs for all the newly allowed paths. The peer may advertise that many Connection IDs, and the local endpoint has to be ready to store them all.\r\n\r\nThe number of paths is limited by the Max Path value, but is also gated by the availability of connection identifiers. Endpoints advertise Max Path values that match their available resource. They only advertise Connection IDs for a specific path ID if they are ready to allocate resource for managing that path ID.",
+      "createdAt": "2024-05-27T21:04:17Z",
+      "updatedAt": "2024-05-27T21:04:17Z",
       "closedAt": null,
       "comments": []
     }
@@ -24148,7 +24282,7 @@
       "id": "PR_kwDOGNtpaM5Lxjfi",
       "title": "Send Abandon frame after NAT rebinding",
       "url": "https://github.com/quicwg/multipath/pull/198",
-      "state": "OPEN",
+      "state": "CLOSED",
       "author": "mirjak",
       "authorAssociation": "COLLABORATOR",
       "assignees": [],
@@ -24157,14 +24291,14 @@
       ],
       "body": "This is the proposed text more the other PR to start working this. The proposed solution in further discussion was to also extend the path abandon path with a specific reason code of this case.",
       "createdAt": "2023-03-10T14:57:27Z",
-      "updatedAt": "2024-02-20T05:54:35Z",
+      "updatedAt": "2024-05-27T14:50:30Z",
       "baseRepository": "quicwg/multipath",
       "baseRefName": "main",
       "baseRefOid": "1cf75916dd74fe81c5f2db5f8f617d3479f2a556",
       "headRepository": "quicwg/multipath",
       "headRefName": "mirjak-patch-20",
       "headRefOid": "6d94bc39d7433067bfeef451aa3f9cf0ff629f01",
-      "closedAt": null,
+      "closedAt": "2024-05-27T14:50:29Z",
       "mergedAt": null,
       "mergedBy": null,
       "mergeCommit": null,
@@ -24189,6 +24323,13 @@
           "body": "I think we need clarity on PR #292 before we progress this draft. We have an issue there, because the \"Natted\" path and the \"before-NAT\" path use the same number space. With PR #292, that gives us a strong constraint. I think I explained a plausible solution in https://github.com/quicwg/multipath/pull/292#discussion_r1493966132, but with that solution if rebinding is accepted the new (natted) path will have the same path_id as before NAT rebinding.",
           "createdAt": "2024-02-20T05:54:33Z",
           "updatedAt": "2024-02-20T05:54:33Z"
+        },
+        {
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "body": "OBE after merge of #292",
+          "createdAt": "2024-05-27T14:50:29Z",
+          "updatedAt": "2024-05-27T14:50:29Z"
         }
       ],
       "reviews": [
@@ -32542,10 +32683,12 @@
       "author": "huitema",
       "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
-      "labels": [],
+      "labels": [
+        "needs-discussion"
+      ],
       "body": "This PR specifies using even number path identifiers. It anticipates the possibility of using the odd numbered identifiers for server-initiated paths, but does not specify how to do that. As a result, it is much simpler than PR #329.\r\n\r\nClose #328",
       "createdAt": "2024-04-17T18:04:35Z",
-      "updatedAt": "2024-05-14T10:32:50Z",
+      "updatedAt": "2024-05-27T14:50:45Z",
       "baseRepository": "quicwg/multipath",
       "baseRefName": "main",
       "baseRefOid": "e930829818ff3a52042bfa5195d8375a1dd9c4c1",
@@ -33595,10 +33738,12 @@
       "author": "mirjak",
       "authorAssociation": "COLLABORATOR",
       "assignees": [],
-      "labels": [],
+      "labels": [
+        "needs-discussion"
+      ],
       "body": "\u2026CHALLENGE\r\n\r\nThis PR is text from PR #315 that needs further discussion before merge. See issue #340 for discussion!",
       "createdAt": "2024-05-24T17:36:28Z",
-      "updatedAt": "2024-05-24T17:36:28Z",
+      "updatedAt": "2024-05-27T20:40:30Z",
       "baseRepository": "quicwg/multipath",
       "baseRefName": "main",
       "baseRefOid": "bdcb1031141a5dc47d89cdb66c1c4b0279c9ca2b",
@@ -33617,20 +33762,865 @@
       "id": "PR_kwDOGNtpaM5wiMJw",
       "title": "Editorial feedback by mbishop",
       "url": "https://github.com/quicwg/multipath/pull/350",
-      "state": "OPEN",
+      "state": "MERGED",
       "author": "MikeBishop",
-      "authorAssociation": "NONE",
+      "authorAssociation": "CONTRIBUTOR",
       "assignees": [],
       "labels": [],
       "body": "Smaller nits from my review. I *believe* these should be entirely editorial and uncontroversial. However, if there's anything you'd like me to lift into a separate PR for discussion, I will happily do so.",
       "createdAt": "2024-05-25T04:04:26Z",
-      "updatedAt": "2024-05-25T04:04:26Z",
+      "updatedAt": "2024-05-27T14:47:21Z",
+      "baseRepository": "quicwg/multipath",
+      "baseRefName": "main",
+      "baseRefOid": "711afed6c47a0a612b32f800cbf56a5f4b274e26",
+      "headRepository": "MikeBishop/multipath",
+      "headRefName": "mbishop/editorial-nits",
+      "headRefOid": "1a87144d47b19162abc2fc7a344aec50720e2a37",
+      "closedAt": "2024-05-27T14:47:21Z",
+      "mergedAt": "2024-05-27T14:47:21Z",
+      "mergedBy": "mirjak",
+      "mergeCommit": {
+        "oid": "9c58bce4c04fdec7aaadd35ba17c944df030db3f"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOGNtpaM58CkXD",
+          "commit": {
+            "abbreviatedOid": "f4b60fe"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-27T14:22:56Z",
+          "updatedAt": "2024-05-27T14:22:57Z",
+          "comments": [
+            {
+              "originalPosition": 170,
+              "body": "```suggestion\r\nThe peer that sends the MP_RETIRE_CONNECTION_ID frame can keep sending data\r\non the path that the retired connection ID was used on but has\r\nto use a different connection ID for the same Path ID when doing so.\r\nIf no other connection ID for the same Path ID is available, the endpoint cannot send on\r\nthis path. This can happen if, e.g., the connection ID issuer requests retirement of a\r\nconnection ID using the Retire Prior To field in the MP_NEW_CONNECTION_ID frame but does\r\nprovide sufficient new CIDs.\r\n```",
+              "createdAt": "2024-05-27T14:22:57Z",
+              "updatedAt": "2024-05-27T14:23:12Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM58CmOU",
+          "commit": {
+            "abbreviatedOid": "a044243"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-27T14:27:15Z",
+          "updatedAt": "2024-05-27T14:27:15Z",
+          "comments": [
+            {
+              "originalPosition": 264,
+              "body": "```suggestion\r\nThe relation between packet number spaces and paths is fixed.\r\nCIDs are separately allocated for each Path ID. Rotating the connection ID on a\r\npath does not change the Path ID. NAT rebinding, though it changes the\r\n4-tuple of the path, also does not change the path identifier.\r\nThe packet number space does not change when connection ID \r\nrotation happens within a given Path ID.\r\n```",
+              "createdAt": "2024-05-27T14:27:15Z",
+              "updatedAt": "2024-05-27T14:27:16Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM58CnBL",
+          "commit": {
+            "abbreviatedOid": "8779667"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-27T14:29:04Z",
+          "updatedAt": "2024-05-27T14:29:05Z",
+          "comments": [
+            {
+              "originalPosition": 311,
+              "body": "```suggestion\r\nNote that connection IDs issued or retired in NEW_CONNECTION_ID frames MUST be treated as if\r\n```",
+              "createdAt": "2024-05-27T14:29:05Z",
+              "updatedAt": "2024-05-27T14:29:05Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM58CnQz",
+          "commit": {
+            "abbreviatedOid": "72e2f35"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-27T14:29:38Z",
+          "updatedAt": "2024-05-27T14:29:39Z",
+          "comments": [
+            {
+              "originalPosition": 312,
+              "body": "```suggestion\r\ntheir Path ID is 0 for compatibility with {{QUIC-TRANSPORT}}.\r\n```",
+              "createdAt": "2024-05-27T14:29:38Z",
+              "updatedAt": "2024-05-27T14:29:39Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM58Cram",
+          "commit": {
+            "abbreviatedOid": "7394611"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-27T14:39:15Z",
+          "updatedAt": "2024-05-27T14:39:16Z",
+          "comments": [
+            {
+              "originalPosition": 269,
+              "body": "```suggestion\r\nThe packet number space does not change when connection ID\r\n```",
+              "createdAt": "2024-05-27T14:39:16Z",
+              "updatedAt": "2024-05-27T14:39:16Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM58CudB",
+          "commit": {
+            "abbreviatedOid": "e04f8c8"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-27T14:46:15Z",
+          "updatedAt": "2024-05-27T14:46:15Z",
+          "comments": [
+            {
+              "originalPosition": 187,
+              "body": "```suggestion\r\neven if there is no valid connection ID associated with the path, both endpoints can still send\r\n```",
+              "createdAt": "2024-05-27T14:46:15Z",
+              "updatedAt": "2024-05-27T14:46:15Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 351,
+      "id": "PR_kwDOGNtpaM5wiMhm",
+      "title": "endhost -> endpoint",
+      "url": "https://github.com/quicwg/multipath/pull/351",
+      "state": "MERGED",
+      "author": "MikeBishop",
+      "authorAssociation": "CONTRIBUTOR",
+      "assignees": [],
+      "labels": [
+        "editorial"
+      ],
+      "body": "The term \"endhost\" appears ~8 times, while \"endpoint\" appears ~70 times. Let's consolidate, unless there's a deliberate distinction.",
+      "createdAt": "2024-05-25T04:06:55Z",
+      "updatedAt": "2024-05-27T13:59:43Z",
       "baseRepository": "quicwg/multipath",
       "baseRefName": "main",
       "baseRefOid": "bdcb1031141a5dc47d89cdb66c1c4b0279c9ca2b",
       "headRepository": "MikeBishop/multipath",
-      "headRefName": "mbishop/editorial-nits",
-      "headRefOid": "f4b60fe9416cd7f1da9511add61fe02fde91ca36",
+      "headRefName": "endhost",
+      "headRefOid": "9bb6738b48bc1fdf4244d0862f2785be2f0dc269",
+      "closedAt": "2024-05-27T13:59:43Z",
+      "mergedAt": "2024-05-27T13:59:43Z",
+      "mergedBy": "mirjak",
+      "mergeCommit": {
+        "oid": "711afed6c47a0a612b32f800cbf56a5f4b274e26"
+      },
+      "comments": [],
+      "reviews": []
+    },
+    {
+      "number": 352,
+      "id": "PR_kwDOGNtpaM5wqHNX",
+      "title": "s/CID/connection ID/",
+      "url": "https://github.com/quicwg/multipath/pull/352",
+      "state": "MERGED",
+      "author": "mirjak",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2024-05-27T12:29:46Z",
+      "updatedAt": "2024-05-27T12:30:23Z",
+      "baseRepository": "quicwg/multipath",
+      "baseRefName": "main",
+      "baseRefOid": "bdcb1031141a5dc47d89cdb66c1c4b0279c9ca2b",
+      "headRepository": "quicwg/multipath",
+      "headRefName": "mirjak-patch-3",
+      "headRefOid": "6e5b0728a9c1ccf07549ea0ab4ebd529008b5c15",
+      "closedAt": "2024-05-27T12:30:22Z",
+      "mergedAt": "2024-05-27T12:30:22Z",
+      "mergedBy": "mirjak",
+      "mergeCommit": {
+        "oid": "e1e4e547d35df734ff80161274e6f4b7ab361a6d"
+      },
+      "comments": [],
+      "reviews": []
+    },
+    {
+      "number": 353,
+      "id": "PR_kwDOGNtpaM5wqI7k",
+      "title": "In states figure: s/Path Blackhole/Idle timeout/",
+      "url": "https://github.com/quicwg/multipath/pull/353",
+      "state": "MERGED",
+      "author": "mirjak",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2024-05-27T12:33:48Z",
+      "updatedAt": "2024-05-27T12:34:49Z",
+      "baseRepository": "quicwg/multipath",
+      "baseRefName": "main",
+      "baseRefOid": "e1e4e547d35df734ff80161274e6f4b7ab361a6d",
+      "headRepository": "quicwg/multipath",
+      "headRefName": "mirjak-patch-4",
+      "headRefOid": "3b72fdfeecfa9a73242bce6484732b513abe54b4",
+      "closedAt": "2024-05-27T12:34:49Z",
+      "mergedAt": "2024-05-27T12:34:49Z",
+      "mergedBy": "mirjak",
+      "mergeCommit": {
+        "oid": "39a52363fb786a54675bfc9881308dc8326de6d9"
+      },
+      "comments": [],
+      "reviews": []
+    },
+    {
+      "number": 354,
+      "id": "PR_kwDOGNtpaM5wqYub",
+      "title": "fix definition of MAX_PATHS frame",
+      "url": "https://github.com/quicwg/multipath/pull/354",
+      "state": "OPEN",
+      "author": "mirjak",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2024-05-27T13:10:04Z",
+      "updatedAt": "2024-05-27T21:50:24Z",
+      "baseRepository": "quicwg/multipath",
+      "baseRefName": "main",
+      "baseRefOid": "9c58bce4c04fdec7aaadd35ba17c944df030db3f",
+      "headRepository": "quicwg/multipath",
+      "headRefName": "mirjak-patch-5",
+      "headRefOid": "5da711580e8516ee49cb3f4bc6ba50e0f63adff0",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [
+        {
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "body": "> We really need a \"flow control\" section of some kind, explaining that we expect resource per active path (number space, ack list, pending packets) and per connection ID (memory), and how these resource are protected.\r\n\r\n@huitema can you open an issue for that? It should probably be part of the implementation section. However, we might even remove or merge some of the text we have there as things are actually less complicated now. See also PR #358 where I already removed some text that is outdated.",
+          "createdAt": "2024-05-27T20:34:45Z",
+          "updatedAt": "2024-05-27T20:34:45Z"
+        },
+        {
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "body": "@huitema as I also wrote in PR #355 I'm currently focusing first of all on defining things normatively only once. Further I really don#t think we should have normative requirements in the example section, so I also move most of this text now into the frame definition section. But I agree that it probably belongs in the path management section. I noticed this as well when I did another full editorial pass in #358. However, the clean up is my first priority now and then I would rather like to make another PR later to check all frame sections and move things accordingly.",
+          "createdAt": "2024-05-27T20:39:52Z",
+          "updatedAt": "2024-05-27T20:39:52Z"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "PRR_kwDOGNtpaM58CZgG",
+          "commit": {
+            "abbreviatedOid": "45d6705"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-27T14:04:34Z",
+          "updatedAt": "2024-05-27T14:04:34Z",
+          "comments": [
+            {
+              "originalPosition": 80,
+              "body": "```suggestion\r\nthe Path ID announced in the Maximum Path Identifier field in the\r\n```",
+              "createdAt": "2024-05-27T14:04:34Z",
+              "updatedAt": "2024-05-27T14:04:34Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM58CuDN",
+          "commit": {
+            "abbreviatedOid": "9f48711"
+          },
+          "author": "huitema",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "I like the idea of moving all the recommendations on path-ID in a single space. You choose to move that to the definition of the MAX_PATHS frame and that's clearly a possibility, but RFC 9000 uses a different approach. The stream-ID structure [2.1. ](https://www.rfc-editor.org/rfc/rfc9000.html#section-2.1)[Stream Types and Identifiers](https://www.rfc-editor.org/rfc/rfc9000.html#name-stream-types-and-identifier), and the restrictions on sending new streams are defined in [4.6. ](https://www.rfc-editor.org/rfc/rfc9000.html#section-4.6)[Controlling Concurrency](https://www.rfc-editor.org/rfc/rfc9000.html#name-controlling-concurrency). The frame descriptions just describe the encoding, with text like _\"Stream ID: A variable-length integer indicating the stream ID of the stream; see [Section 2.1](https://www.rfc-editor.org/rfc/rfc9000.html#stream-id).\"_\r\n\r\nOn the text itself, I struggled with the same issues when writing PR #331, and I added a clip of what I wrote in the comments.",
+          "createdAt": "2024-05-27T14:45:22Z",
+          "updatedAt": "2024-05-27T14:56:54Z",
+          "comments": [
+            {
+              "originalPosition": 93,
+              "body": "For information, I struggled with the same set of issues when writing the \"even numbers\" PR. The text that I came up with was:\r\n```\r\nMaximum Paths:\r\n: A count of the cumulative number of paths that can be opened\r\nover the lifetime of the connection.\r\n\r\nThe endpoint receiving this frame MAY send MP_NEW_CONNECTION_ID frames\r\nwith Path IDs strictly lower than twice the Maximum Paths.\r\nFor example, if an endpoint received a Maximum Paths value of 3,\r\nit may send MP_NEW_CONNECTION_ID with Path ID 0, 2 and 4, but not higher.\r\n\r\nThe Maximum Paths value cannot exceed 2^31-1, as it is not\r\npossible to encode Path IDs larger than 2^32-2. Receipt of a\r\nPath Identifier larger than this limit MUST be treated\r\nas a connection error of type FRAME_ENCODING_ERROR.\r\n\r\nThe Maximum Paths value MUST NOT be lower than the value\r\nadvertised in the \"initial_max_paths\" transport parameter. Receipt\r\nof a value lower than the \"initial_max_paths\" transport parameter\r\nMUST be treated as a connection error of type MP_PROTOCOL_ERROR.\r\n```\r\nSome of that text was motivated by the odd-even split, but a lot of it was about clarify how the path-ID is used.",
+              "createdAt": "2024-05-27T14:45:22Z",
+              "updatedAt": "2024-05-27T14:56:54Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM58C46A",
+          "commit": {
+            "abbreviatedOid": "f961cf5"
+          },
+          "author": "qdeconinck",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "CHANGES_REQUESTED",
+          "body": "I think the MAX_PATHS should remain a unidirectional advertisement message (in the current text, I am not sure this intent is still kept) and the path ID management should be enforced on the available Connection IDs for some Path ID.",
+          "createdAt": "2024-05-27T15:12:03Z",
+          "updatedAt": "2024-05-27T15:31:54Z",
+          "comments": [
+            {
+              "originalPosition": 64,
+              "body": "Note that the MAX_PATHS frame is a unidirectional advertisement.\r\n```suggestion\r\n: The largest Path ID that can be used for this connection by the receiving endpoint.\r\n```",
+              "createdAt": "2024-05-27T15:12:03Z",
+              "updatedAt": "2024-05-27T15:31:54Z"
+            },
+            {
+              "originalPosition": 83,
+              "body": "```suggestion\r\ncorresponds to the value of initial_max_paths transport parameter.\r\n```",
+              "createdAt": "2024-05-27T15:13:10Z",
+              "updatedAt": "2024-05-27T15:31:54Z"
+            },
+            {
+              "originalPosition": 81,
+              "body": "I think we should clarify that the MAX_PATHS frame is a unidirectional advertisement to the peer having the same semantic as the `initial_max_paths` TP. To that end, an endpoint MUST NOT issue new CIDs for a Path ID larger than the maximum one advertised by the peer (and not SHOULD NOT) and MUST terminate the a connection with an error of type MP_PROTOCOL_VIOLATION. Allowing (without recommending) an endpoint to issue CIDs with Path ID larger than supported by the receiving host pose security concerns from a resource exhaustion viewpoint.\r\n\r\nHowever, if the peer allows a maximum Path ID X that is larger than the local advertised maximum path ID Y (i.e., X > Y), then an endpoint may (MAY?) provides CIDs for Path IDs Z where Y < Z <= X.\r\n\r\nFurther, we probably mention the MAX_PATHS frame (and not MP_MAX_PATHS).",
+              "createdAt": "2024-05-27T15:20:53Z",
+              "updatedAt": "2024-05-27T15:31:54Z"
+            },
+            {
+              "originalPosition": 87,
+              "body": "To me, this whole paragraph can be removed once the corrections of the previous paragraph are integrated.",
+              "createdAt": "2024-05-27T15:26:30Z",
+              "updatedAt": "2024-05-27T15:31:54Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM58D-jh",
+          "commit": {
+            "abbreviatedOid": "ecda708"
+          },
+          "author": "huitema",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "We really need a \"flow control\" section of some kind, explaining that we expect resource per active path (number space, ack list, pending packets) and per connection ID (memory), and how these resource are protected.",
+          "createdAt": "2024-05-27T20:00:33Z",
+          "updatedAt": "2024-05-27T20:03:42Z",
+          "comments": [
+            {
+              "originalPosition": 20,
+              "body": "Uh, no. We could encode up to 2^62 - 1. The real reason is that we cannot encode more than 32 bit of path-ID and 64 bit of packet number in the 96 bit AEAD nonce.",
+              "createdAt": "2024-05-27T20:00:33Z",
+              "updatedAt": "2024-05-27T20:03:42Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM58ECZL",
+          "commit": {
+            "abbreviatedOid": "12e8647"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-27T20:22:14Z",
+          "updatedAt": "2024-05-27T20:22:14Z",
+          "comments": [
+            {
+              "originalPosition": 20,
+              "body": "That doesn't make sense. In this case we would allow 2^62 - 1 path IDs but require a key update earlier.",
+              "createdAt": "2024-05-27T20:22:14Z",
+              "updatedAt": "2024-05-27T20:22:14Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM58EDMN",
+          "commit": {
+            "abbreviatedOid": "12e8647"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-27T20:27:36Z",
+          "updatedAt": "2024-05-27T20:27:36Z",
+          "comments": [
+            {
+              "originalPosition": 93,
+              "body": "We can define the max paths as either the cumulative number of path over the whole life or the largest id. The part that I was trying to fix is that the frame figure said the field is called \"Maximum Paths\" but the text was defining \"Maximum Path Identifier\". I thought the later is clearer but in the end we just have to fix it such that it is correct, one or the other way. @huitema do you prefer \"Maximum Paths\"?",
+              "createdAt": "2024-05-27T20:27:36Z",
+              "updatedAt": "2024-05-27T20:27:37Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM58EG8i",
+          "commit": {
+            "abbreviatedOid": "ecda708"
+          },
+          "author": "huitema",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-27T20:49:21Z",
+          "updatedAt": "2024-05-27T20:49:21Z",
+          "comments": [
+            {
+              "originalPosition": 20,
+              "body": "I would be fine with that. It was actually the original design. But there are complexities. For example, can you have both a long-lived path number 1 and then create path ID 2^32 + 1? ",
+              "createdAt": "2024-05-27T20:49:21Z",
+              "updatedAt": "2024-05-27T20:49:22Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM58EIVq",
+          "commit": {
+            "abbreviatedOid": "ecda708"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-27T20:58:57Z",
+          "updatedAt": "2024-05-27T20:58:57Z",
+          "comments": [
+            {
+              "originalPosition": 20,
+              "body": "hm, okay I guess 2^32 - 1 paths are usually enough... In this case I think we need to actually use a MUST here and we should maybe remove the respective text from the intro in order to define it only once.\r\n\r\nIt's late here; I will update the PR accordingly tomorrow which gives also others a chance to comment.",
+              "createdAt": "2024-05-27T20:58:57Z",
+              "updatedAt": "2024-05-27T20:58:57Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM58EJMI",
+          "commit": {
+            "abbreviatedOid": "12e8647"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-27T21:05:02Z",
+          "updatedAt": "2024-05-27T21:05:02Z",
+          "comments": [
+            {
+              "originalPosition": 87,
+              "body": "+1 to remove it",
+              "createdAt": "2024-05-27T21:05:02Z",
+              "updatedAt": "2024-05-27T21:05:02Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM58EJjH",
+          "commit": {
+            "abbreviatedOid": "9f48711"
+          },
+          "author": "huitema",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-27T21:07:49Z",
+          "updatedAt": "2024-05-27T21:07:49Z",
+          "comments": [
+            {
+              "originalPosition": 93,
+              "body": "MAX_PATHS, MAX_PATH_ID, [\"bonnet blanc et blanc bonnet\"](https://www.frenchlearner.com/expressions/cest-bonnet-blanc-et-blanc-bonnet/), as we say in French. I don't really care.",
+              "createdAt": "2024-05-27T21:07:49Z",
+              "updatedAt": "2024-05-27T23:09:59Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM58EKRy",
+          "commit": {
+            "abbreviatedOid": "12e8647"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-27T21:13:09Z",
+          "updatedAt": "2024-05-27T21:13:09Z",
+          "comments": [
+            {
+              "originalPosition": 81,
+              "body": "But yes, we really need to clarify that the value is unidirectional. I was thinking at some point that this is a global value and thought that if the MAX_PATHS frame gets reordered, a MP_NEW_CONNECTION_ID frame using a new path id could arrive before. However, as MAX_PATHS is sent from one peer and MP_NEW_CONNECTION_ID from the other, this cannot happen. So this is should be a MUST NOT. I will propose further text to clarify tomorrow!\r\n\r\n```suggestion\r\nEndpoints MUST NOT issue new connection IDs which have path identifiers larger than\r\nthe Path ID announced by the peer in the Maximum Path Identifier field in the MAX_PATHS frame.\r\n```",
+              "createdAt": "2024-05-27T21:13:09Z",
+              "updatedAt": "2024-05-27T21:14:00Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM58EMWK",
+          "commit": {
+            "abbreviatedOid": "12e8647"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-27T21:19:09Z",
+          "updatedAt": "2024-05-27T21:19:09Z",
+          "comments": [
+            {
+              "originalPosition": 20,
+              "body": "Also based on @huitema text below we need to add this:\r\n\r\n```suggestion\r\n\r\nThe Maximum Path Identifier MUST NOT be lower than the value\r\nadvertised in the initial_max_paths transport parameter. Receipt\r\nof a Path ID lower than the value of initial_max_paths transport parameter\r\nMUST be treated as a connection error of type MP_PROTOCOL_VIOLATION.\r\n```",
+              "createdAt": "2024-05-27T21:19:09Z",
+              "updatedAt": "2024-05-27T21:27:36Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM58ENVh",
+          "commit": {
+            "abbreviatedOid": "12e8647"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-27T21:27:22Z",
+          "updatedAt": "2024-05-27T21:27:23Z",
+          "comments": [
+            {
+              "originalPosition": 80,
+              "body": "I don't think FRAME_ENCODING_ERROR is actually the right error here. It should be MP_PROTOCOL_VIOLATION.\r\n\r\n```suggestion\r\nMUST be treated as a connection error of type MP_PROTOCOL_VIOLATION.\r\n```",
+              "createdAt": "2024-05-27T21:27:22Z",
+              "updatedAt": "2024-05-27T21:35:17Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM58EOYf",
+          "commit": {
+            "abbreviatedOid": "12e8647"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-27T21:36:41Z",
+          "updatedAt": "2024-05-27T21:36:41Z",
+          "comments": [
+            {
+              "originalPosition": 91,
+              "body": "```suggestion\r\nIf no MAX_PATHS frame was received yet, the Maximum Path Identifier\r\n```",
+              "createdAt": "2024-05-27T21:36:41Z",
+              "updatedAt": "2024-05-27T21:36:41Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM58EOce",
+          "commit": {
+            "abbreviatedOid": "5da7115"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-27T21:37:14Z",
+          "updatedAt": "2024-05-27T21:37:14Z",
+          "comments": [
+            {
+              "originalPosition": 87,
+              "body": "```suggestion\r\n```",
+              "createdAt": "2024-05-27T21:37:14Z",
+              "updatedAt": "2024-05-27T21:37:14Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM58EO5m",
+          "commit": {
+            "abbreviatedOid": "5da7115"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-27T21:41:20Z",
+          "updatedAt": "2024-05-27T21:41:20Z",
+          "comments": [
+            {
+              "originalPosition": 101,
+              "body": "I also proposed to remove this sentence for now. First it is unclear what \"not enough\" means and second we have two open issues to discuss this further (see #325 and #338).\r\n\r\n```suggestion\r\n```",
+              "createdAt": "2024-05-27T21:41:20Z",
+              "updatedAt": "2024-05-27T21:41:20Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM58EP5x",
+          "commit": {
+            "abbreviatedOid": "5da7115"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-27T21:50:24Z",
+          "updatedAt": "2024-05-27T21:50:24Z",
+          "comments": [
+            {
+              "originalPosition": 93,
+              "body": "Okay, but I guess if we use the max path id field, we should also rename the frame... \r\n\r\nLooking at this now again I guess renaming the field in the definition to \"Maximum Paths\" would have been the smaller chance. I'll revise this PR again tomorrow in order to keep chances as small as possible for now (but ensure things are correct). Sorry for forth and back.",
+              "createdAt": "2024-05-27T21:50:24Z",
+              "updatedAt": "2024-05-27T21:50:24Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 355,
+      "id": "PR_kwDOGNtpaM5wqgFP",
+      "title": "Move normative requirement away from example section",
+      "url": "https://github.com/quicwg/multipath/pull/355",
+      "state": "OPEN",
+      "author": "mirjak",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2024-05-27T13:26:26Z",
+      "updatedAt": "2024-05-27T20:31:29Z",
+      "baseRepository": "quicwg/multipath",
+      "baseRefName": "main",
+      "baseRefOid": "9c58bce4c04fdec7aaadd35ba17c944df030db3f",
+      "headRepository": "quicwg/multipath",
+      "headRefName": "mirjak-patch-6",
+      "headRefOid": "92a22bafe3bc4bc7080a52a37d16240e9b0100d5",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOGNtpaM58CaEM",
+          "commit": {
+            "abbreviatedOid": "2491cef"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-27T14:05:07Z",
+          "updatedAt": "2024-05-27T14:05:07Z",
+          "comments": [
+            {
+              "originalPosition": 4,
+              "body": "```suggestion\r\nAfter a path is abandoned, the Path ID MUST NOT be reused\r\n```",
+              "createdAt": "2024-05-27T14:05:07Z",
+              "updatedAt": "2024-05-27T14:05:07Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM58C1zd",
+          "commit": {
+            "abbreviatedOid": "92a22ba"
+          },
+          "author": "huitema",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "COMMENTED",
+          "body": "We should move 2 paragraphs, \"MUST NOT\" ad \"SHOULD\", not just \"MUST NOT\".",
+          "createdAt": "2024-05-27T15:03:23Z",
+          "updatedAt": "2024-05-27T15:04:08Z",
+          "comments": [
+            {
+              "originalPosition": 6,
+              "body": "We should also copy here the SHOULD requirement in the example text:\r\n```\r\nEndpoint SHOULD send MAX_PATHS frames {{max-paths-frame}} to raise\r\nthe limit of Path ID when endpoint finds there are not enough unused\r\nPath ID (e.g. more than half of the available Path ID are used).\r\n```",
+              "createdAt": "2024-05-27T15:03:23Z",
+              "updatedAt": "2024-05-27T15:04:08Z"
+            },
+            {
+              "originalPosition": 17,
+              "body": "We should also move the next paragraph.",
+              "createdAt": "2024-05-27T15:03:26Z",
+              "updatedAt": "2024-05-27T15:04:08Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM58DBAI",
+          "commit": {
+            "abbreviatedOid": "92a22ba"
+          },
+          "author": "qdeconinck",
+          "authorAssociation": "CONTRIBUTOR",
+          "state": "APPROVED",
+          "body": "Ok, with the provided suggestions.",
+          "createdAt": "2024-05-27T15:34:31Z",
+          "updatedAt": "2024-05-27T15:35:38Z",
+          "comments": [
+            {
+              "originalPosition": 6,
+              "body": "Copying as suggestion what Christian suggests. Note that I am not sure that we need to provide the example of \"more than half of the available Path ID are used\".\r\n\r\n```suggestion\r\n\r\nEndpoint SHOULD send MAX_PATHS frames {{max-paths-frame}} to raise\r\nthe limit of Path ID when endpoint finds there are not enough unused\r\nPath ID (e.g. more than half of the available Path ID are used).\r\n```",
+              "createdAt": "2024-05-27T15:34:31Z",
+              "updatedAt": "2024-05-27T15:35:38Z"
+            },
+            {
+              "originalPosition": 20,
+              "body": "From the suggestion of Christian.\r\n```suggestion\r\n```",
+              "createdAt": "2024-05-27T15:34:58Z",
+              "updatedAt": "2024-05-27T15:35:38Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM58EBf5",
+          "commit": {
+            "abbreviatedOid": "92a22ba"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-27T20:18:04Z",
+          "updatedAt": "2024-05-27T20:18:05Z",
+          "comments": [
+            {
+              "originalPosition": 17,
+              "body": "This is moved as part of PR #354. I moved it into the MAX_PATHS section. Maybe it should rather go above into the path closure section but I think there is actually more that needs moving.",
+              "createdAt": "2024-05-27T20:18:04Z",
+              "updatedAt": "2024-05-27T20:18:05Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM58EBnP",
+          "commit": {
+            "abbreviatedOid": "92a22ba"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-27T20:18:43Z",
+          "updatedAt": "2024-05-27T20:18:44Z",
+          "comments": [
+            {
+              "originalPosition": 20,
+              "body": "This is moved as part of PR #354",
+              "createdAt": "2024-05-27T20:18:43Z",
+              "updatedAt": "2024-05-27T20:18:44Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM58EDwh",
+          "commit": {
+            "abbreviatedOid": "92a22ba"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-27T20:31:29Z",
+          "updatedAt": "2024-05-27T20:31:29Z",
+          "comments": [
+            {
+              "originalPosition": 6,
+              "body": "PR #354 basically moves this text in the MAX_PATHS frame section. It might fit better here but my main intention is right now to have it only once normatively defined and not in a section where we shouldn't have normative language. I think I will make another paths later where we can again move things around. However, right now I'm really focusing on ensuring we have it defined only once and clearly.",
+              "createdAt": "2024-05-27T20:31:29Z",
+              "updatedAt": "2024-05-27T20:31:29Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 356,
+      "id": "PR_kwDOGNtpaM5wqvNB",
+      "title": "fix Path ID/path identifier capitalisation",
+      "url": "https://github.com/quicwg/multipath/pull/356",
+      "state": "MERGED",
+      "author": "mirjak",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "",
+      "createdAt": "2024-05-27T13:56:49Z",
+      "updatedAt": "2024-05-27T13:58:32Z",
+      "baseRepository": "quicwg/multipath",
+      "baseRefName": "main",
+      "baseRefOid": "39a52363fb786a54675bfc9881308dc8326de6d9",
+      "headRepository": "quicwg/multipath",
+      "headRefName": "mirjak-patch-7",
+      "headRefOid": "b89ac34dde56e30b3dd69ec9eeb15795126d4dac",
+      "closedAt": "2024-05-27T13:58:31Z",
+      "mergedAt": "2024-05-27T13:58:31Z",
+      "mergedBy": "mirjak",
+      "mergeCommit": {
+        "oid": "7338e3ca341b312847da2601414043efca39d3ca"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOGNtpaM58CVeZ",
+          "commit": {
+            "abbreviatedOid": "2916931"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-27T13:57:47Z",
+          "updatedAt": "2024-05-27T13:57:47Z",
+          "comments": [
+            {
+              "originalPosition": 132,
+              "body": "```suggestion\r\nin {{QUIC-TRANSPORT}}, do not have a\r\n```",
+              "createdAt": "2024-05-27T13:57:47Z",
+              "updatedAt": "2024-05-27T13:57:47Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 357,
+      "id": "PR_kwDOGNtpaM5wrH-G",
+      "title": "paths are closed not retired",
+      "url": "https://github.com/quicwg/multipath/pull/357",
+      "state": "OPEN",
+      "author": "mirjak",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [
+        "editorial"
+      ],
+      "body": "",
+      "createdAt": "2024-05-27T14:53:08Z",
+      "updatedAt": "2024-05-27T14:53:18Z",
+      "baseRepository": "quicwg/multipath",
+      "baseRefName": "main",
+      "baseRefOid": "9c58bce4c04fdec7aaadd35ba17c944df030db3f",
+      "headRepository": "quicwg/multipath",
+      "headRefName": "mirjak-patch-8",
+      "headRefOid": "5fb2e1c6b0be3bf61504f4ac73c5d93e0b20c578",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
@@ -33639,30 +34629,171 @@
       "reviews": []
     },
     {
-      "number": 351,
-      "id": "PR_kwDOGNtpaM5wiMhm",
-      "title": "endhost -> endpoint",
-      "url": "https://github.com/quicwg/multipath/pull/351",
+      "number": 358,
+      "id": "PR_kwDOGNtpaM5wrt2j",
+      "title": "Editorial pass",
+      "url": "https://github.com/quicwg/multipath/pull/358",
       "state": "OPEN",
-      "author": "MikeBishop",
-      "authorAssociation": "NONE",
+      "author": "mirjak",
+      "authorAssociation": "COLLABORATOR",
       "assignees": [],
       "labels": [],
-      "body": "The term \"endhost\" appears ~8 times, while \"endpoint\" appears ~70 times. Let's consolidate, unless there's a deliberate distinction.",
-      "createdAt": "2024-05-25T04:06:55Z",
-      "updatedAt": "2024-05-25T04:06:55Z",
+      "body": "",
+      "createdAt": "2024-05-27T16:44:44Z",
+      "updatedAt": "2024-05-27T23:04:46Z",
       "baseRepository": "quicwg/multipath",
       "baseRefName": "main",
-      "baseRefOid": "bdcb1031141a5dc47d89cdb66c1c4b0279c9ca2b",
-      "headRepository": "MikeBishop/multipath",
-      "headRefName": "endhost",
-      "headRefOid": "9bb6738b48bc1fdf4244d0862f2785be2f0dc269",
+      "baseRefOid": "9c58bce4c04fdec7aaadd35ba17c944df030db3f",
+      "headRepository": "quicwg/multipath",
+      "headRefName": "mirjak-patch-9",
+      "headRefOid": "fa5ba3ae2a33060d8c42c1a17bd22a1a07305372",
       "closedAt": null,
       "mergedAt": null,
       "mergedBy": null,
       "mergeCommit": null,
       "comments": [],
-      "reviews": []
+      "reviews": [
+        {
+          "id": "PRR_kwDOGNtpaM58ED6H",
+          "commit": {
+            "abbreviatedOid": "7fb82b1"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-27T20:32:24Z",
+          "updatedAt": "2024-05-27T20:32:25Z",
+          "comments": [
+            {
+              "originalPosition": 191,
+              "body": "```suggestion\r\nThe effect of receiving a MP_RETIRE_CONNECTION_ID frame is specified in\r\n```",
+              "createdAt": "2024-05-27T20:32:25Z",
+              "updatedAt": "2024-05-27T20:32:25Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM58ED9D",
+          "commit": {
+            "abbreviatedOid": "7fb82b1"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-27T20:32:43Z",
+          "updatedAt": "2024-05-27T20:32:43Z",
+          "comments": [
+            {
+              "originalPosition": 559,
+              "body": "```suggestion\r\nspace and as such per Path ID.\r\n```",
+              "createdAt": "2024-05-27T20:32:43Z",
+              "updatedAt": "2024-05-27T20:32:43Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM58EWiL",
+          "commit": {
+            "abbreviatedOid": "9a54f60"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-27T22:56:22Z",
+          "updatedAt": "2024-05-27T22:56:23Z",
+          "comments": [
+            {
+              "originalPosition": 128,
+              "body": "```suggestion\r\neach endpoint uses the MP_NEW_CONNECTION_ID frame as specified in this extension\r\n```",
+              "createdAt": "2024-05-27T22:56:23Z",
+              "updatedAt": "2024-05-27T22:56:23Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM58EXPs",
+          "commit": {
+            "abbreviatedOid": "544d2e9"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-27T23:03:04Z",
+          "updatedAt": "2024-05-27T23:03:04Z",
+          "comments": [
+            {
+              "originalPosition": 671,
+              "body": "```suggestion\r\nthat was issued by its peer. This includes the connection ID used\r\nduring the handshake for the initial path with Path ID 0.\r\n```",
+              "createdAt": "2024-05-27T23:03:04Z",
+              "updatedAt": "2024-05-27T23:03:05Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM58EXSt",
+          "commit": {
+            "abbreviatedOid": "1eec6c7"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-27T23:03:36Z",
+          "updatedAt": "2024-05-27T23:03:37Z",
+          "comments": [
+            {
+              "originalPosition": 677,
+              "body": "```suggestion\r\ndelivered to a peer using the MP_NEW_CONNECTION_ID frame (see Section {{mp-new-conn-id-frame}}).\r\n```",
+              "createdAt": "2024-05-27T23:03:37Z",
+              "updatedAt": "2024-05-27T23:03:37Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM58EXXK",
+          "commit": {
+            "abbreviatedOid": "cbc3f65"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-27T23:04:25Z",
+          "updatedAt": "2024-05-27T23:04:25Z",
+          "comments": [
+            {
+              "originalPosition": 6,
+              "body": "```suggestion\r\nassociated with the old path. the multipath extension specified in this document requires\r\n```",
+              "createdAt": "2024-05-27T23:04:25Z",
+              "updatedAt": "2024-05-27T23:04:25Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOGNtpaM58EXYp",
+          "commit": {
+            "abbreviatedOid": "78cef61"
+          },
+          "author": "mirjak",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2024-05-27T23:04:42Z",
+          "updatedAt": "2024-05-27T23:04:43Z",
+          "comments": [
+            {
+              "originalPosition": 6,
+              "body": "```suggestion\r\nassociated with the old path. The multipath extension specified in this document requires\r\n```",
+              "createdAt": "2024-05-27T23:04:43Z",
+              "updatedAt": "2024-05-27T23:04:43Z"
+            }
+          ]
+        }
+      ]
     }
   ]
 }
