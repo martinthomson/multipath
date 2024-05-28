@@ -2154,6 +2154,12 @@ ACK_MP[Path ID=1, PN=Y] -&gt;
 <a href="#name-example-of-closing-a-path" class="selfRef">Example of closing a path.</a>
           </figcaption></figure>
 </div>
+<p id="section-6.2-5">After a path is abandoned, the path identifier associated with the path
+is considered retired and MUST NOT be reused in new paths for security
+considerations discussed in <a href="#multipath-aead" class="auto internal xref">Section 5.2</a>.<a href="#section-6.2-5" class="pilcrow">¶</a></p>
+<p id="section-6.2-6">Endpoint SHOULD send MAX_PATHS frames <a href="#max-paths-frame" class="auto internal xref">Section 8.7</a> to raise
+the limit of Path ID when endpoint finds there are not enough unused
+Path ID (e.g. more than half of the available Path ID are used).<a href="#section-6.2-6" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
