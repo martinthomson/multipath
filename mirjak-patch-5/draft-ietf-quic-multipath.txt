@@ -1427,9 +1427,9 @@ Table of Contents
    Maximum Paths value corresponds to the value of initial_max_paths
    transport parameter.
 
-   When there are not enough unused path identifiers, endpoints can send
-   a MAX_PATHS frame to inform the peer that new path identifiers are
-   available.
+   When there are no connection IDs available for unused path
+   identifiers, endpoints can send a MAX_PATHS frame to inform the peer
+   that new path identifiers are available.
 
 9.  Error Codes
 
