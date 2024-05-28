@@ -719,7 +719,7 @@ Table of Contents
 
                          Figure 1: States of a path
 
-   In all bit the "Closed" states, hosts have to track the following
+   In all but the "Closed" states, hosts have to track the following
    information.
 
    *  Associated 4-tuple: The tuple (source IP, source port, destination
