@@ -1170,8 +1170,7 @@ Table of Contents
 
 8.2.  PATH_ABANDON Frame
 
-   The PATH_ABANDON frame informs the peer to abandon a path and retire
-   the associated Path ID.
+   The PATH_ABANDON frame informs the peer to abandon a path.
 
    PATH_ABANDON frames are formatted as shown in Figure 5.
 
