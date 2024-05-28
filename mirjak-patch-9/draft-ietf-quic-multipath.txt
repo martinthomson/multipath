@@ -5,7 +5,7 @@
 QUIC Working Group                                  刘彦梅 (Y. Liu), Ed.
 Internet-Draft                                              Alibaba Inc.
 Intended status: Standards Track                          马云飞 (Y. Ma)
-Expires: 28 November 2024                         Uber Technologies Inc.
+Expires: 29 November 2024                         Uber Technologies Inc.
                                                       Q. De Coninck, Ed.
                                               University of Mons (UMONS)
                                                           O. Bonaventure
@@ -14,7 +14,7 @@ Expires: 28 November 2024                         Uber Technologies Inc.
                                                     Private Octopus Inc.
                                                       M. Kuehlewind, Ed.
                                                                 Ericsson
-                                                             27 May 2024
+                                                             28 May 2024
 
 
                       Multipath Extension for QUIC
@@ -52,7 +52,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 28 November 2024.
+   This Internet-Draft will expire on 29 November 2024.
 
 Copyright Notice
 
@@ -906,7 +906,7 @@ Table of Contents
    In this example, the server confirms the path closure by sending an
    PATH_ABANDON frame by for the same Path ID to the client also using
    the other path with DCID C2.  Both the client and the server can
-   close the path after receiving the RETIRE_CONNECTION_ID frame for
+   close the path after receiving the MP_RETIRE_CONNECTION_ID frame for
    that path.
 
  Client                                                      Server
