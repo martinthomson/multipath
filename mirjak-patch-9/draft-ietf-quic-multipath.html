@@ -1994,16 +1994,14 @@ peer in the Path ID-specfic packet number space is initially set to "None".<a hr
 acknowledge 1-RTT packets.
 Compared to the ACK frame as specified in <span><a href="https://rfc-editor.org/rfc/rfc9000#section-19.3" class="relref">Section 19.3</a> of [<a href="#QUIC-TRANSPORT" class="cite xref">QUIC-TRANSPORT</a>]</span>, the ACK_MP frame additionally
 contains the receiver's Path ID to identify the path-specific packet number space.<a href="#section-5.1-1" class="pilcrow">¶</a></p>
-<p id="section-5.1-2">Acknowledgements of Initial and Handshake packets MUST be carried using
-ACK frames, as specified in <span>[<a href="#QUIC-TRANSPORT" class="cite xref">QUIC-TRANSPORT</a>]</span>. The ACK frames, as defined
-in <span>[<a href="#QUIC-TRANSPORT" class="cite xref">QUIC-TRANSPORT</a>]</span>, do not have a
-Path Identifier field to identify the path and this the packet number space.
+<p id="section-5.1-2">As multipath support is unknown during the handshake, acknowledgements of
+Initial and Handshake packets are sent using ACK frames.
 If the multipath extension has been successfully
 negotiated, ACK frames in 1-RTT packets acknowledge packets for the path with
 Path ID 0.<a href="#section-5.1-2" class="pilcrow">¶</a></p>
 <p id="section-5.1-3">As soon as the negotiation of multipath support is completed,
-endpoints SHOULD use ACK_MP frames instead of ACK frames to acknowledge application
-data packets, including 0-RTT packets, using the initial connection ID with
+endpoints SHOULD use ACK_MP frames instead of ACK frames,
+including 0-RTT packets, using the initial connection ID with
 Path ID 0 after the handshake concluded.<a href="#section-5.1-3" class="pilcrow">¶</a></p>
 <p id="section-5.1-4">ACK_MP frames (defined in <a href="#ack-mp-frame" class="auto internal xref">Section 8.1</a>) can be returned on any path.
 If the ACK_MP is preferred to be sent on the same path as the acknowledged
