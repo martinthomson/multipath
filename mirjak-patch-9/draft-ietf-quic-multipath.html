@@ -1789,12 +1789,17 @@ is to not send a PATH_RESPONSE in response to the peer's PATH_CHALLENGE.<a href=
 The Path Identifier 0 indicates the initial path of the connection.
 Endpoints SHOULD issue at least one unused connection ID with an unused path identifier.<a href="#section-4.3.3-1" class="pilcrow">¶</a></p>
 <p id="section-4.3.3-2">An endpoint maintains a set of connection IDs received from its peer for each path,
-any of which it can use when sending packets, as the same in <span>[<a href="#QUIC-TRANSPORT" class="cite xref">QUIC-TRANSPORT</a>]</span>.
+any of which it can use when sending packets, as specified in <span><a href="https://rfc-editor.org/rfc/rfc9000#section-5.1" class="relref">Section 5.1</a> of [<a href="#QUIC-TRANSPORT" class="cite xref">QUIC-TRANSPORT</a>]</span>.
 In the multipath extension, each connection ID belongs to one path specified by
 the Path Identifier field of MP_NEW_CONNECTION_ID frame in <a href="#mp-new-conn-id-frame" class="auto internal xref">Section 8.5</a>.
 The connection IDs used during the handshake belong to the initial path
-with Path ID 0.<a href="#section-4.3.3-2" class="pilcrow">¶</a></p>
-<p id="section-4.3.3-3">Sending a MP_RETIRE_CONNECTION_ID frame indicates that the connection ID
+with Path ID 0. Usually, it is desired to provide at least one more connection ID for
+for all used path and at least one for an unused Path ID, to allow for migration and
+opening of new paths.<a href="#section-4.3.3-2" class="pilcrow">¶</a></p>
+<p id="section-4.3.3-3">If the client has used all the allocated connection IDs, it is supposed to retire
+those that are not used anymore, and the server is supposed to provide
+replacements, as specified in <span><a href="https://rfc-editor.org/rfc/rfc9000#section-5.1.1." class="relref">Section 5.1.1.</a> of [<a href="#QUIC-TRANSPORT" class="cite xref">QUIC-TRANSPORT</a>]</span>.
+Sending a MP_RETIRE_CONNECTION_ID frame indicates that the connection ID
 will not be used anymore. If the path is still active, the peer SHOULD replace
 it with a new connection ID using a MP_NEW_CONNECTION_ID frame.<a href="#section-4.3.3-3" class="pilcrow">¶</a></p>
 <p id="section-4.3.3-4">Note that Sequeunce Number and Retire Prior To fields correspond to
@@ -1804,9 +1809,9 @@ using the corresponding connection IDs of the specified path and retire them
 with MP_RETIRE_CONNECTION_ID frames before adding the newly provided connection ID
 to the set of active connection IDs belonging to the specified path.<a href="#section-4.3.3-5" class="pilcrow">¶</a></p>
 <p id="section-4.3.3-6">Endpoints MUST NOT issue new connection IDs which have Path IDs larger than
-the Maximum Path Identifier field in MP_MAX_PATHS frames <a href="#max-paths-frame" class="auto internal xref">Section 8.7</a>.
+the Maximum Path Identifier field in MAX_PATHS frames <a href="#max-paths-frame" class="auto internal xref">Section 8.7</a>.
 When an endpoint finds it has not enough available unused path identifiers,
-it SHOULD send a MP_MAX_PATHS frame to inform the peer that it could use larger active
+it SHOULD send a MAX_PATHS frame to inform the peer that it could use larger active
 path identifiers.<a href="#section-4.3.3-6" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -2107,11 +2112,6 @@ with a PATH_CHALLENGE frame, it has to check whether there is
 an unused connection IDs for the same unused Path ID available for each side.
 Respectively, the client chooses the connection ID S1
 as the Destination Connection ID of the new path.<a href="#section-6.1-4" class="pilcrow">¶</a></p>
-<p id="section-6.1-5">If the client has used all the allocated connection IDs, it is supposed to retire
-those that are not used anymore, and the server is supposed to provide
-replacements, as specified in <span>[<a href="#QUIC-TRANSPORT" class="cite xref">QUIC-TRANSPORT</a>]</span>.
-Usually, it is desired to provide one more connection ID as currently
-in use, to allow for new paths or migration.<a href="#section-6.1-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="path-closure">
