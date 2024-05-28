@@ -2415,8 +2415,8 @@ MUST silently ignore the frame.<a href="#section-8-3" class="pilcrow">¶</a></p>
         </h3>
 <p id="section-8.1-1">The ACK_MP frame (types TBD-00 and TBD-01)
 is an extension of the ACK frame specified in <span><a href="https://rfc-editor.org/rfc/rfc9000#section-19.3" class="relref">Section 19.3</a> of [<a href="#QUIC-TRANSPORT" class="cite xref">QUIC-TRANSPORT</a>]</span>. It is
-used to acknowledge packets that were sent on different paths using
-each an own packet number space. If the frame type is TBD-01, ACK_MP frames
+used to acknowledge packets that were sent on different paths, as
+each path as its own packet number space. If the frame type is TBD-01, ACK_MP frames
 also contain the sum of QUIC packets with associated ECN marks received
 on the acknowledged packet number space up to this point.<a href="#section-8.1-1" class="pilcrow">¶</a></p>
 <p id="section-8.1-2">ACK_MP frame is formatted as shown in <a href="#fig-ack-mp-format" class="auto internal xref">Figure 4</a>.<a href="#section-8.1-2" class="pilcrow">¶</a></p>
