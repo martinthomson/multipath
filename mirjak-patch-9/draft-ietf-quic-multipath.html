@@ -2107,6 +2107,11 @@ with a PATH_CHALLENGE frame, it has to check whether there is
 an unused connection IDs for the same unused Path ID available for each side.
 Respectively, the client chooses the connection ID S1
 as the Destination Connection ID of the new path.<a href="#section-6.1-4" class="pilcrow">¶</a></p>
+<p id="section-6.1-5">If the client has used all the allocated connection IDs, it is supposed to retire
+those that are not used anymore, and the server is supposed to provide
+replacements, as specified in <span>[<a href="#QUIC-TRANSPORT" class="cite xref">QUIC-TRANSPORT</a>]</span>.
+Usually, it is desired to provide one more connection ID as currently
+in use, to allow for new paths or migration.<a href="#section-6.1-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="path-closure">
