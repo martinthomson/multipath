@@ -5,7 +5,7 @@
 QUIC Working Group                                  刘彦梅 (Y. Liu), Ed.
 Internet-Draft                                              Alibaba Inc.
 Intended status: Standards Track                          马云飞 (Y. Ma)
-Expires: 13 November 2025                         Uber Technologies Inc.
+Expires: 15 December 2025                         Uber Technologies Inc.
                                                       Q. De Coninck, Ed.
                                               University of Mons (UMONS)
                                                           O. Bonaventure
@@ -14,7 +14,7 @@ Expires: 13 November 2025                         Uber Technologies Inc.
                                                     Private Octopus Inc.
                                                       M. Kuehlewind, Ed.
                                                                 Ericsson
-                                                             12 May 2025
+                                                            13 June 2025
 
 
                       Multipath Extension for QUIC
@@ -52,7 +52,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 13 November 2025.
+   This Internet-Draft will expire on 15 December 2025.
 
 Copyright Notice
 
@@ -1385,7 +1385,10 @@ Table of Contents
    [QUIC-TRANSPORT] the DPLPMTUD Maximum Packet Size (MPS) is maintained
    for each combination of local and remote IP addresses.  One simple
    option, if the PMTUs are similar, is to apply the minimum PMTU of all
-   paths to each path.
+   paths to each path.  The benefit of such an approach is to simplify
+   retransmission processing as the content of lost packets initially
+   sent on one path can be sent on another path without further frame
+   scheduling adaptations.
 
 5.9.  Idle Timeout and Keep-Alives
 
